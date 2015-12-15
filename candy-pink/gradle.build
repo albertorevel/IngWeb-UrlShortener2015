@@ -1,9 +1,0 @@
-eclipse {
-   project {
-      name = "UrlShortener2015.CandyPink"
-   }
-}
-
-dependencies {
-   compile project(":common")
-}
