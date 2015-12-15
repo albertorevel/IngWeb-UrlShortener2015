@@ -20,14 +20,28 @@ apply plugin: 'spring-boot'
 mainClassName = 'urlshortener2015.fuzzywuzzy.Application'
 
 dependencies {
-    compile project(':common')
+//    compile project(':common')
 
     // Provides the production database
     runtime 'org.hsqldb:hsqldb'
 
     // Provides java script libraries for static content
     compile 'org.webjars:bootstrap:3.3.5'
-    compile 'org.webjars:jquery:2.1.4'    
+    compile 'org.webjars:jquery:2.1.4'
+
+
+    compile 'org.springframework.boot:spring-boot-starter-web:1.2.6.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-jdbc:1.2.6.RELEASE'
+    compile 'org.springframework.hateoas:spring-hateoas:0.16.0.RELEASE'
+    compile 'org.springframework.plugin:spring-plugin-core:1.1.0.RELEASE'
+
+    compile 'commons-validator:commons-validator:1.4.0'
+    compile 'com.google.guava:guava:17.0'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test:1.2.6.RELEASE'
+    testCompile 'com.jayway.jsonpath:json-path:0.9.1'
+    testRuntime 'org.hsqldb:hsqldb:2.3.3'
+
 
     // Testing framework
     testCompile 'org.springframework.boot:spring-boot-starter-test'

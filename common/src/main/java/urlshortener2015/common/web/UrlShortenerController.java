@@ -70,11 +70,17 @@ public class UrlShortenerController {
 
     protected ResponseEntity<?> createSuccessfulRedirectToResponse(ShortURL l) {
         HttpHeaders h = new HttpHeaders();
-        h.setLocation(URI.create(l.getTarget()));
+        if(l.getPublicidad()!=null){
+            h.add("Redireccion",l.getTarget());
+            h.setLocation(URI.create(l.getPublicidad()));
+        }
+        else{
+            h.setLocation(URI.create(l.getTarget()));
+        }
         return new ResponseEntity<>(h, HttpStatus.valueOf(l.getMode()));
     }
 
-    @RequestMapping(value = "/link", method = RequestMethod.POST)
+//    @RequestMapping(value = "/link", method = RequestMethod.POST)
     public ResponseEntity<ShortURL> shortener(@RequestParam("url") String url,
                                               @RequestParam(value = "sponsor", required = false) String sponsor,
                                               @RequestParam(value = "brand", required = false) String brand,
@@ -109,7 +115,7 @@ public class UrlShortenerController {
             ShortURL su = new ShortURL(id, url,
                     uri, sponsor, new Date(
                     System.currentTimeMillis()), owner,
-                    HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef);
+                    HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef, null);
             return shortURLRepository.save(su);
         } else {
             return null;
