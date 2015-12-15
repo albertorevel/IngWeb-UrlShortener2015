@@ -3,3 +3,9 @@
 /.settings/
 /.gradle/
 /build/
+/.idea/
+*/build
+*.iml
+UrlShortener2015.iws
+UrlShortener2015.ipr
+/lib

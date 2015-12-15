@@ -1,0 +1,36 @@
+buildscript {
+  repositories {
+	mavenCentral()
+	maven { url 'http://repo.spring.io/release' }
+  }
+  dependencies {
+    classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE'
+  }
+}
+
+eclipse {
+   project {
+      name = 'UrlShortener2015.FuzzyWuzzy'
+   }
+}
+
+apply plugin: 'eclipse-wtp'
+apply plugin: 'spring-boot'
+
+mainClassName = 'urlshortener2015.fuzzywuzzy.Application'
+
+dependencies {
+    compile project(':common')
+
+    // Provides the production database
+    runtime 'org.hsqldb:hsqldb'
+
+    // Provides java script libraries for static content
+    compile 'org.webjars:bootstrap:3.3.5'
+    compile 'org.webjars:jquery:2.1.4'    
+
+    // Testing framework
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile 'org.apache.httpcomponents:httpclient:4.5'
+    testCompile 'com.jayway.jsonpath:json-path:0.9.1'
+}
