@@ -1,5 +1,6 @@
 package urlshortener2015.fuzzywuzzy;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,9 +64,9 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
 		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
 		ReadContext rc = JsonPath.parse(entity.getBody());
-		assertThat(rc.read("$.hash"), is("f684a3c4"));
-		assertThat(rc.read("$.uri"), is("http://localhost:"+ this.port+"/f684a3c4"));
-		assertThat(rc.read("$.target"), is("http://example.com/"));
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.sponsor"), is(nullValue()));
 	
 	
@@ -114,10 +115,10 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
 		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
 		ReadContext rc = JsonPath.parse(entity.getBody());
-		assertThat(rc.read("$.hash"), is("f684a3c4"));
-		assertThat(rc.read("$.uri"), is("http://localhost:"+ this.port+"/f684a3c4"));
-		assertThat(rc.read("$.target"), is("http://example.com/"));
-		assertThat(rc.read("$.qrApi"), is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4"));
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
+		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4"));
 	}
 
 	public void testCreateVCardQrCode() throws Exception {
@@ -127,10 +128,10 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
 		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
 		ReadContext rc = JsonPath.parse(entity.getBody());
-		assertThat(rc.read("$.hash"), is("f684a3c4"));
-		assertThat(rc.read("$.uri"), is("http://localhost:"+ this.port+"/f684a3c4"));
-		assertThat(rc.read("$.target"), is("http://example.com/"));
-		assertThat(rc.read("$.qrApi"), is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=BEGIN%3AVCARD%0AVERSION%3A4.0%0AN%3AExample+page%0AURL%3Ahttp://localhost:" + this.port + "/bf19bedb%0AEND%3AVCARD"));
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
+		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=BEGIN%3AVCARD%0AVERSION%3A4.0%0AN%3AExample+page%0AURL%3Ahttp://localhost:" + this.port + "/bf19bedb%0AEND%3AVCARD"));
 	}
 
 	public void testCreateCorrectionQrCode() throws Exception {
@@ -140,10 +141,10 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
 		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
 		ReadContext rc = JsonPath.parse(entity.getBody());
-		assertThat(rc.read("$.hash"), is("f684a3c4"));
-		assertThat(rc.read("$.uri"), is("http://localhost:"+ this.port+"/f684a3c4"));
-		assertThat(rc.read("$.target"), is("http://example.com/"));
-		assertThat(rc.read("$.qrApi"), is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4&chld=L"));
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
+		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4&chld=L"));
 	}
 }
 

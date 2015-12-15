@@ -1,4 +1,4 @@
-package urlshortener2015.common.repository;
+package urlshortener2015.fuzzywuzzy.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,13 +15,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import urlshortener2015.common.domain.ShortURL;
+import urlshortener2015.fuzzywuzzy.domain.ShortURL;
+import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 
 @Repository
 public class ShortURLRepositoryImpl implements ShortURLRepository {
 
     private static final Logger log = LoggerFactory
-            .getLogger(ShortURLRepositoryImpl.class);
+            .getLogger(urlshortener2015.fuzzywuzzy.repository.ShortURLRepositoryImpl.class);
 
     private static final RowMapper<ShortURL> rowMapper = new RowMapper<ShortURL>() {
         @Override
@@ -31,7 +32,7 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
                     rs.getString("owner"), rs.getInt("mode"),
                     rs.getBoolean("safe"), rs.getString("ip"),
                     rs.getString("country"), rs.getString("qrApi"),
-                    rs.getString("qrCode"), rs.getString("publicidad"));
+                    rs.getString("qrCode"));
 //            shortURL.setQrCode(rs.getString("qrcode"));
             return shortURL;
         }
@@ -61,10 +62,10 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
     @Override
     public ShortURL save(ShortURL su) {
         try {
-            jdbc.update("INSERT INTO shorturl VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            jdbc.update("INSERT INTO shorturl VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                     su.getHash(), su.getTarget(), su.getSponsor(),
                     su.getCreated(), su.getOwner(), su.getMode(), su.getSafe(),
-                    su.getIP(), su.getCountry(), su.getQrApi(), su.getQrCode(),su.getPublicidad());
+                    su.getIP(), su.getCountry(), su.getQrApi(), su.getQrCode());
         } catch (DuplicateKeyException e) {
             log.debug("When insert for key " + su.getHash(), e);
             return su;
@@ -94,10 +95,10 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
     public void update(ShortURL su) {
         try {
             jdbc.update(
-                    "update shorturl set target=?, sponsor=?, created=?, owner=?, mode=?, safe=?, ip=?, country=?, qrApi=?, qrCode=?, publicidad=? where hash=?",
+                    "update shorturl set target=?, sponsor=?, created=?, owner=?, mode=?, safe=?, ip=?, country=?, qrApi=?, qrCode=? where hash=?",
                     su.getTarget(), su.getSponsor(), su.getCreated(),
                     su.getOwner(), su.getMode(), su.getSafe(), su.getIP(),
-                    su.getCountry(), su.getQrApi(), su.getQrCode(), su.getPublicidad(), su.getHash());
+                    su.getCountry(), su.getQrApi(), su.getQrCode(), su.getHash());
         } catch (Exception e) {
             log.debug("When update for hash " + su.getHash(), e);
         }
