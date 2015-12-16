@@ -20,10 +20,14 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 
 import urlshortener2015.fuzzywuzzy.Application;
+import urlshortener2015.fuzzywuzzy.domain.Click;
+import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -37,6 +41,7 @@ public class SystemTests {
 
 	@Value("${local.server.port}")
 	private int port = 0;
+	private ClickRepository repository;
 
 	@Test
 	public void testHome() throws Exception {

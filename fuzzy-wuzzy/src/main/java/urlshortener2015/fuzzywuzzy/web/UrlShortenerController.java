@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import urlshortener2015.fuzzywuzzy.domain.Click;
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
 import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
@@ -44,8 +45,24 @@ public class UrlShortenerController {
 	@RequestMapping(value = "/{id:(?!link|index).*}", method = RequestMethod.GET)
 	public ResponseEntity<?> redirectTo(@PathVariable String id, HttpServletRequest request) {
 		ShortURL l = shortURLRepository.findByKey(id);
+		//Si existe esa id/shortURL
 		if (l != null) {
-			createAndSaveClick(id, extractIP(request));
+			String ip = extractIP(request);
+			//Realizamos la petición a la api externa que nos proporciona los datos: pais, ciudad, comunidad y coordenadas(latitud y longitud)
+			RestTemplate restTemplate = new RestTemplate();
+			String data = restTemplate.getForObject("http://api.ipinfodb.com/v3/ip-city/" +
+					"?key=1a981acd9a7c266e618f658ed1fa0081b5150555443a77596547a318e4baa7de&ip=" + ip, String.class);
+			String[] words = data.split(";");
+			//Si la api externa funciona correctamente
+			if(words[0].equals("OK")){
+				createAndSaveClick(id, ip, words[4], words[5], words[6], words[8], words[9]);
+			}
+			//Si la api externa no esta diponible
+			else{
+				createAndSaveClick(id, ip, null, null, null, null, null);
+			}
+
+
 			return createSuccessfulRedirectToResponse(l);
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -79,9 +96,9 @@ public class UrlShortenerController {
 		}
 	}
 
-	protected void createAndSaveClick(String hash, String ip) {
+	protected void createAndSaveClick(String hash, String ip, String country, String comunidad, String city, String latitud, String longitud) {
 		Click cl = new Click(null, hash, new Date(System.currentTimeMillis()),
-				null, null, null, ip, null);
+				null, null, null, ip, country, comunidad, city, latitud, longitud);
 		cl = clickRepository.save(cl);
 		log.info(cl != null ? "[" + hash + "] saved with id [" + cl.getId() + "]" : "[" + hash + "] was not saved");
 	}
