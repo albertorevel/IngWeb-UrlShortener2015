@@ -1,13 +1,6 @@
 package urlshortener2015.fuzzywuzzy.web;
 
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-
 import com.google.common.hash.Hashing;
-import com.google.zxing.*;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,30 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import org.springframework.web.client.RestTemplate;
-import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
-import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
+import org.springframework.web.bind.annotation.*;
 import urlshortener2015.fuzzywuzzy.domain.Click;
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
+import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
+import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
-import java.util.Hashtable;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
@@ -87,10 +66,10 @@ public class UrlShortenerController {
 											  @RequestParam(value = "correction", required = false) String correction,
 											  HttpServletRequest request) {
 		logger.info("Requested new short for uri " + url);
-//		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
-//				.randomUUID().toString(), extractIP(request));
-		ShortURL su = createAndSaveIfValid(url, sponsor, brand, "test me", correction, UUID
+		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
 				.randomUUID().toString(), extractIP(request));
+//		ShortURL su = createAndSaveIfValid(url, sponsor, brand, "test me", correction, UUID
+//				.randomUUID().toString(), extractIP(request));
 		if (su != null) {
 			HttpHeaders h = new HttpHeaders();
 			h.setLocation(su.getUri());
@@ -118,10 +97,15 @@ public class UrlShortenerController {
 			URI uri = linkTo(
 					methodOn(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class).redirectTo(
 							id, null)).toUri();
-			String qrApi = createQrQuery(uri, vCardName, correction);
+
 //			RestTemplate restTemplate = new RestTemplate();
 //			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
-			String qrDef = encodeBase64String(byteArray);
+			if (correction == null) {
+				correction = "L";
+			}
+			QrGenerator qrGenerator = new QrGenerator(150,150,"UTF-8",correction.charAt(0),uri.toString(),vCardName,0xFFFFFFF,0);
+			String qrApi = qrGenerator.getQrApi();
+			String qrDef = qrGenerator.getEncodedQr();
 			ShortURL su = new ShortURL(id, url,
 					uri, sponsor, new Date(
 					System.currentTimeMillis()), owner,
@@ -132,71 +116,6 @@ public class UrlShortenerController {
 		}
 	}
 
-
-	private String createQrQuery(URI uri, String vCardName, String correction) {
-		String query = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8";
-		String content = null;
-		if (vCardName == null) {
-			content = uri.toString();
-			content2 = uri.toString();
-		} else {
-			try {
-				vCardName = URLEncoder.encode(vCardName, "UTF-8");
-				content = "BEGIN%3AVCARD%0AVERSION%3A4.0%0AN%3A" + vCardName +
-						"%0AURL%3A" + uri + "%0AEND%3AVCARD";
-				content2 = URLDecoder.decode(content,"UTF-8");
-
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-				return null;
-			}
-
-		}
-		if (correction != null) {
-			query += "&chld=" + correction;
-		}
-		BitMatrix matrix = null;
-		Writer writer = new QRCodeWriter();
-		Map<EncodeHintType,Object> hints = new Hashtable<>();
-		hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-
-		try {
-			matrix = writer.encode(content2, BarcodeFormat.QR_CODE, 400, 400,hints);
-		} catch (WriterException e) {
-			e.printStackTrace();
-		}
-
-		BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_INT_RGB);
-		// Iterate through the matrix and draw the pixels to the image
-		int hexa1 = 0xff00ff;
-		int hexa2 = 0xFFFFFF;
-		for (int y = 0; y < 400; y++) {
-			for (int x = 0; x < 400; x++) {
-				int grayValue = (matrix.get(x, y) ? 0 : 1) & 0xff;
-				image.setRGB(x, y, (grayValue == 0 ? hexa1 : hexa2));
-			}
-		}
-
-
-		try {
-			FileOutputStream qrCode = new FileOutputStream("W:/qrcode.png");
-			ImageIO.write(image, "png", qrCode);
-			qrCode.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		try {
-			ImageIO.write(image, "png", baos);
-			byteArray = baos.toByteArray();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return query + "&chl=" +content;
-
-	}
 	protected String extractIP(HttpServletRequest request) {
 		return request.getRemoteAddr();
 	}
