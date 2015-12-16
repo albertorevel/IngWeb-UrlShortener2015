@@ -4,11 +4,10 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.common.hash.Hashing;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.Writer;
-import com.google.zxing.WriterException;
+import com.google.zxing.*;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
@@ -156,16 +157,18 @@ public class UrlShortenerController {
 		}
 		BitMatrix matrix = null;
 		Writer writer = new QRCodeWriter();
+		Map<EncodeHintType,Object> hints = new Hashtable<>();
+		hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
 
 		try {
-			matrix = writer.encode(content2, BarcodeFormat.QR_CODE, 400, 400);
+			matrix = writer.encode(content2, BarcodeFormat.QR_CODE, 400, 400,hints);
 		} catch (WriterException e) {
 			e.printStackTrace();
 		}
 
 		BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_INT_RGB);
 		// Iterate through the matrix and draw the pixels to the image
-		int hexa1 = 0xff0000;
+		int hexa1 = 0xff00ff;
 		int hexa2 = 0xFFFFFF;
 		for (int y = 0; y < 400; y++) {
 			for (int x = 0; x < 400; x++) {
@@ -175,13 +178,13 @@ public class UrlShortenerController {
 		}
 
 
-//		try {
-//			FileOutputStream qrCode = new FileOutputStream("W:/qrcode.png");
-//			ImageIO.write(image, "png", qrCode);
-//			qrCode.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			FileOutputStream qrCode = new FileOutputStream("W:/qrcode.png");
+			ImageIO.write(image, "png", qrCode);
+			qrCode.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
