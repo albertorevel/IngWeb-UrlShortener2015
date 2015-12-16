@@ -1,7 +1,5 @@
 package urlshortener2015.fuzzywuzzy.web;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.google.common.hash.Hashing;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
@@ -10,21 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import org.springframework.web.client.RestTemplate;
-import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
-import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
+import org.springframework.web.bind.annotation.*;
 import urlshortener2015.fuzzywuzzy.domain.Click;
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
+import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
+import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 
-import java.io.UnsupportedEncodingException;
+import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.util.UUID;
@@ -33,10 +24,15 @@ import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+
 @RestController
 public class UrlShortenerController {
 	private static final Logger log = LoggerFactory
 			.getLogger(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class);
+
+	private String content2;
+	private byte[] byteArray;
+
 	@Autowired
 	protected ShortURLRepository shortURLRepository;
 
@@ -66,12 +62,14 @@ public class UrlShortenerController {
 	public ResponseEntity<ShortURL> shortener(@RequestParam("url") String url,
 											  @RequestParam(value = "sponsor", required = false) String sponsor,
 											  @RequestParam(value = "brand", required = false) String brand,
-											  @RequestParam(value = "vCardName", required = false) String vCard,
+											  @RequestParam(value = "vCardName", required = false) String vCardName,
 											  @RequestParam(value = "correction", required = false) String correction,
 											  HttpServletRequest request) {
 		logger.info("Requested new short for uri " + url);
-		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCard, correction, UUID
+		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
 				.randomUUID().toString(), extractIP(request));
+//		ShortURL su = createAndSaveIfValid(url, sponsor, brand, "test me", correction, UUID
+//				.randomUUID().toString(), extractIP(request));
 		if (su != null) {
 			HttpHeaders h = new HttpHeaders();
 			h.setLocation(su.getUri());
@@ -99,9 +97,15 @@ public class UrlShortenerController {
 			URI uri = linkTo(
 					methodOn(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class).redirectTo(
 							id, null)).toUri();
-			String qrApi = createQrQuery(uri, vCardName, correction);
-			RestTemplate restTemplate = new RestTemplate();
-			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
+
+//			RestTemplate restTemplate = new RestTemplate();
+//			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
+			if (correction == null) {
+				correction = "L";
+			}
+			QrGenerator qrGenerator = new QrGenerator(150,150,"UTF-8",correction.charAt(0),uri.toString(),vCardName,0xFFFFFFF,0);
+			String qrApi = qrGenerator.getQrApi();
+			String qrDef = qrGenerator.getEncodedQr();
 			ShortURL su = new ShortURL(id, url,
 					uri, sponsor, new Date(
 					System.currentTimeMillis()), owner,
@@ -111,27 +115,7 @@ public class UrlShortenerController {
 			return null;
 		}
 	}
-	private String createQrQuery(URI uri, String vCardName, String correction) {
-		String query = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=";
-		if (vCardName == null) {
-			query += uri;
-		} else {
-			try {
-				vCardName = URLEncoder.encode(vCardName, "UTF-8");
-				query += "BEGIN%3AVCARD%0AVERSION%3A4.0%0AN%3A" + vCardName +
-						"%0AURL%3A" + uri + "%0AEND%3AVCARD";
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-				query = null;
-			}
 
-		}
-		if (correction != null) {
-			query += "&chld=" + correction;
-		}
-		return query;
-
-	}
 	protected String extractIP(HttpServletRequest request) {
 		return request.getRemoteAddr();
 	}
