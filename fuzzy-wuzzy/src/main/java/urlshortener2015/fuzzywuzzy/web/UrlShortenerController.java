@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
@@ -49,7 +50,7 @@ public class UrlShortenerController {
 	private static final Logger log = LoggerFactory
 			.getLogger(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class);
 
-	private String content;
+	private String content2;
 	private byte[] byteArray;
 
 	@Autowired
@@ -81,11 +82,13 @@ public class UrlShortenerController {
 	public ResponseEntity<ShortURL> shortener(@RequestParam("url") String url,
 											  @RequestParam(value = "sponsor", required = false) String sponsor,
 											  @RequestParam(value = "brand", required = false) String brand,
-											  @RequestParam(value = "vCardName", required = false) String vCard,
+											  @RequestParam(value = "vCardName", required = false) String vCardName,
 											  @RequestParam(value = "correction", required = false) String correction,
 											  HttpServletRequest request) {
 		logger.info("Requested new short for uri " + url);
-		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCard, correction, UUID
+//		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
+//				.randomUUID().toString(), extractIP(request));
+		ShortURL su = createAndSaveIfValid(url, sponsor, brand, "test me", correction, UUID
 				.randomUUID().toString(), extractIP(request));
 		if (su != null) {
 			HttpHeaders h = new HttpHeaders();
@@ -115,7 +118,7 @@ public class UrlShortenerController {
 					methodOn(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class).redirectTo(
 							id, null)).toUri();
 			String qrApi = createQrQuery(uri, vCardName, correction);
-			RestTemplate restTemplate = new RestTemplate();
+//			RestTemplate restTemplate = new RestTemplate();
 //			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
 			String qrDef = encodeBase64String(byteArray);
 			ShortURL su = new ShortURL(id, url,
@@ -131,13 +134,17 @@ public class UrlShortenerController {
 
 	private String createQrQuery(URI uri, String vCardName, String correction) {
 		String query = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8";
+		String content = null;
 		if (vCardName == null) {
 			content = uri.toString();
+			content2 = uri.toString();
 		} else {
 			try {
 				vCardName = URLEncoder.encode(vCardName, "UTF-8");
 				content = "BEGIN%3AVCARD%0AVERSION%3A4.0%0AN%3A" + vCardName +
 						"%0AURL%3A" + uri + "%0AEND%3AVCARD";
+				content2 = URLDecoder.decode(content,"UTF-8");
+
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return null;
@@ -151,7 +158,7 @@ public class UrlShortenerController {
 		Writer writer = new QRCodeWriter();
 
 		try {
-			matrix = writer.encode(content, BarcodeFormat.QR_CODE, 400, 400);
+			matrix = writer.encode(content2, BarcodeFormat.QR_CODE, 400, 400);
 		} catch (WriterException e) {
 			e.printStackTrace();
 		}
