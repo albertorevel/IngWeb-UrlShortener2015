@@ -5,10 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
-import urlshortener2015.fuzzywuzzy.repository.ClickRepositoryImpl;
-import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
-import urlshortener2015.fuzzywuzzy.repository.ShortURLRepositoryImpl;
+import urlshortener2015.common.repository.ClickRepository;
+import urlshortener2015.common.repository.ClickRepositoryImpl;
+import urlshortener2015.common.repository.ShortURLRepository;
+import urlshortener2015.common.repository.ShortURLRepositoryImpl;
 
 @Configuration
 public class PersistenceContext {

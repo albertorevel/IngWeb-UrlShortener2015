@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import urlshortener2015.common.domain.ShortURL;
-import urlshortener2015.fuzzywuzzy.web.UrlShortenerController;
+import urlshortener2015.common.web.UrlShortenerController;
 
 @RestController
 public class UrlShortenerControllerWithLogs extends UrlShortenerController {
@@ -28,12 +28,9 @@ public class UrlShortenerControllerWithLogs extends UrlShortenerController {
 
 	@Override
 	public ResponseEntity<ShortURL> shortener(@RequestParam("url") String url,
-											  @RequestParam(value = "sponsor", required = false) String sponsor,
-											  @RequestParam(value = "brand", required = false) String brand,
-											  @RequestParam(value = "vCardName", required = false) String vCard,
-											  @RequestParam(value = "correction", required = false) String correction,
-											  HttpServletRequest request) {
+			@RequestParam(value = "sponsor", required = false) String sponsor,
+			@RequestParam(value = "brand", required = false) String brand, HttpServletRequest request) {
 		logger.info("Requested new short for uri " + url);
-		return super.shortener(url, sponsor, brand, vCard, correction, request);
+		return super.shortener(url, sponsor, brand, request);
 	}
 }
