@@ -1,4 +1,4 @@
-package urlshortener2015.common.web;
+package urlshortener2015.fuzzywuzzy.web;
 
 import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
@@ -12,7 +12,6 @@ import java.sql.Date;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
@@ -30,8 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import urlshortener2015.common.domain.Click;
 import urlshortener2015.common.domain.ShortURL;
-import urlshortener2015.common.repository.ClickRepository;
-import urlshortener2015.common.repository.ShortURLRepository;
+import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
+import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 
 import com.google.common.hash.Hashing;
 

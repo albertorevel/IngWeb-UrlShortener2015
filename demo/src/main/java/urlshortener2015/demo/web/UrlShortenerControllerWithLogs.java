@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import urlshortener2015.common.domain.ShortURL;
-import urlshortener2015.common.web.UrlShortenerController;
+import urlshortener2015.fuzzywuzzy.web.UrlShortenerController;
 
 @RestController
 public class UrlShortenerControllerWithLogs extends UrlShortenerController {

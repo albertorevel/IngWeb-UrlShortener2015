@@ -1,4 +1,4 @@
-package urlshortener2015.common.repository;
+package urlshortener2015.fuzzywuzzy.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
