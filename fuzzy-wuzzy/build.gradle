@@ -16,6 +16,7 @@ eclipse {
 
 apply plugin: 'eclipse-wtp'
 apply plugin: 'spring-boot'
+apply plugin: 'jacoco'
 
 mainClassName = 'urlshortener2015.fuzzywuzzy.Application'
 
@@ -37,6 +38,9 @@ dependencies {
 
     compile 'commons-validator:commons-validator:1.4.0'
     compile 'com.google.guava:guava:17.0'
+    compile 'com.google.zxing:core:3.2.1'
+    compile 'commons-codec:commons-codec:1.4'
+
 
     testCompile 'org.springframework.boot:spring-boot-starter-test:1.2.6.RELEASE'
     testCompile 'com.jayway.jsonpath:json-path:0.9.1'
@@ -48,3 +52,12 @@ dependencies {
     testCompile 'org.apache.httpcomponents:httpclient:4.5'
     testCompile 'com.jayway.jsonpath:json-path:0.9.1'
 }
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+check.dependsOn jacocoTestReport
