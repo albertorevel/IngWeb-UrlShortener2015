@@ -2,6 +2,7 @@ package urlshortener2015.fuzzywuzzy.domain;
 
 /**
  * Created by diego on 17/12/15.
+ * Objeto utilizado para guardar información agregada de la base datos.
  */
 public class ClickAgr {
 
