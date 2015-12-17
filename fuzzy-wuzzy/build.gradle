@@ -39,6 +39,7 @@ dependencies {
     compile 'commons-validator:commons-validator:1.4.0'
     compile 'com.google.guava:guava:17.0'
     compile 'com.google.zxing:core:3.2.1'
+    compile 'org.apache.commons.codec.binary:1.7'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test:1.2.6.RELEASE'
     testCompile 'com.jayway.jsonpath:json-path:0.9.1'
