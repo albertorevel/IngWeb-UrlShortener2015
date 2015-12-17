@@ -18,8 +18,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import urlshortener2015.fuzzywuzzy.domain.Click;
-import urlshortener2015.fuzzywuzzy.domain.ShortURL;
-import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
+import urlshortener2015.fuzzywuzzy.domain.ClickAgr;
 
 
 @Repository
@@ -39,16 +38,38 @@ public class ClickRepositoryImpl implements ClickRepository {
 		}
 	};
 
-	private static final RowMapper<ShortURL> rowMapper2 = new RowMapper<ShortURL>() {
+	/*
+	 * Mapping para cuando sólo se guardan los campos country, target y count
+	 */
+	private static final RowMapper<ClickAgr> rowMapperGroupCountry = new RowMapper<ClickAgr>() {
 		@Override
-		public ShortURL mapRow(ResultSet rs, int rowNum) throws SQLException {
-			ShortURL shortURL = new ShortURL(rs.getString("hash"), rs.getString("target"),
-					null, rs.getString("sponsor"), rs.getDate("created"),
-					rs.getString("owner"), rs.getInt("mode"),
-					rs.getBoolean("safe"), rs.getString("ip"),
-					rs.getString("country"), rs.getString("qrApi"),
-					rs.getString("qrCode"));
-			return shortURL;
+		public ClickAgr mapRow(ResultSet rs, int rowNum) throws SQLException {
+			ClickAgr clickAgr = new ClickAgr(rs.getString(1), rs.getString(2), rs.getInt(3));
+			return clickAgr;
+		}
+	};
+
+	/*
+	 * Mapping para cuando sólo se guardan los campos country, comunity, target y count
+	 */
+	private static final RowMapper<ClickAgr> rowMapperGroupComunity = new RowMapper<ClickAgr>() {
+		@Override
+		public ClickAgr mapRow(ResultSet rs, int rowNum) throws SQLException {
+			ClickAgr clickAgr = new ClickAgr(rs.getString(1), rs.getString(2),
+					rs.getString(3), rs.getInt(4));
+			return clickAgr;
+		}
+	};
+
+	/*
+	 * Mapping para cuando sólo se guardan los campos country, comunity, city, target y count
+	 */
+	private static final RowMapper<ClickAgr> rowMapperGroupCity = new RowMapper<ClickAgr>() {
+		@Override
+		public ClickAgr mapRow(ResultSet rs, int rowNum) throws SQLException {
+			ClickAgr clickAgr = new ClickAgr(rs.getString(1), rs.getString(2),
+					rs.getString(3), rs.getString(4), rs.getInt(5));
+			return clickAgr;
 		}
 	};
 
@@ -58,38 +79,9 @@ public class ClickRepositoryImpl implements ClickRepository {
 	public ClickRepositoryImpl() {
 	}
 
-	public ClickRepositoryImpl(JdbcTemplate jdbc) {
-		this.jdbc = jdbc;
-		//DATOS INTRODUCIDOS PARA PROBARLO
-		String url = "http://www.unizar.es/";
-		String id = Hashing.murmur3_32()
-				.hashString(url, StandardCharsets.UTF_8).toString();
-		Click data = new Click(null, id, new Date(2015,10,2),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", "37.406", "-122.079");
-		save(data);
-		data = new Click(null, id, new Date(2015,1,1),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "37.406", "-122.079");
-		save(data);
-		data = new Click(null, id, new Date(2015,2,5),
-				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", "37.406", "-122.079");
-		save(data);
-		data = new Click(null, id, new Date(2015,9,3),
-				null, null, null, "74.125.45.100", "Marruecos", "Nose", "MarruecosCity", "370.406", "-32.079");
-		save(data);
-		data = new Click(null, id, new Date(2014,12,17),
-				null, null, null, "74.125.45.100", "Marruecos", "Nose", "MarruecosCity", "370.406", "-32.079");
-		save(data);
-		data = new Click(null, id, new Date(2015,11,4),
-				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "63.406", "-963.079");
-		save(data);
-		data = new Click(null, id, new Date(2015,5,13),
-				null, null, null, "74.125.45.100", "United States", "New York", "New York", "1636.406", "1969.079");
-		save(data);
-		List<Click> list = findByGroup("iza");
-		List<Click> list2 = findByGroupSince("iza", new Date(2015,1,1));
-		List<Click> list3 = findByGroupUntil("iza", new Date(2015,1,1));
-		List<Click> list4 = findByGroupBounded("iza", new Date(2015,1,1),new Date(2015,6,1));
-	}
+	public ClickRepositoryImpl(JdbcTemplate jdbc) {this.jdbc = jdbc;}
+
+
 
 	@Override
 	public List<Click> findByHash(String hash) {
@@ -210,49 +202,141 @@ public class ClickRepositoryImpl implements ClickRepository {
 		return -1L;
 	}
 
-	public List<Click> findByGroup(String er) {
+	/**
+	 * Método que devuelve toda la información agregada
+	 * @param er patrón
+	 * @param group indica sobre qué parametro se agrega la información (country, comunity o city)
+	 * @return Lista de objetos que contiene toda información agregada
+	 */
+	public List<ClickAgr> findByGroup(String er,String group) {
 
 		try {
 			String concatenate = "%"+er+"%";
-			return jdbc.query("SELECT c.* FROM shorturl s, click c WHERE (s.target LIKE ? AND c.hash=s.hash)",
-					new Object[]{concatenate}, rowMapper);
+			if(group.equals("city")){
+				return jdbc.query("SELECT country, comunity, city, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) " +
+						"GROUP BY country, comunity, city, target ORDER BY target",
+						new Object[]{concatenate},rowMapperGroupCity);
+
+			}
+			else if(group.equals("comunity")){
+				return jdbc.query("SELECT country, comunity, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) GROUP BY country, comunity, target " +
+						"ORDER BY target", new Object[]{concatenate},rowMapperGroupComunity);
+			}
+			else{
+				return jdbc.query("SELECT country, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target," +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) GROUP BY country, target " +
+						"ORDER BY target", new Object[]{concatenate},rowMapperGroupCountry);
+			}
+
 		} catch (Exception e) {
 			log.debug("When select for regurlar expresion " + er, e);
 			return null;
 		}
 	}
 
-	public List<Click> findByGroupSince(String er, Date date) {
+	/**
+	 * Método que devuelve la información agregada desde una fecha
+	 * @param er patrón
+	 * @param group indica sobre qué parametro se agrega la información (country, comunity o city)
+	 * @param date fecha límite
+	 * @return Lista de objetos que contiene toda información agregada
+	 */
+	public List<ClickAgr> findByGroupSince(String er, String group, Date date) {
 
 		try {
 			String concatenate = "%"+er+"%";
-			return jdbc.query("SELECT c.* FROM shorturl s, click c WHERE (s.target LIKE ? AND c.hash=s.hash AND c.created >= ?)",
-					new Object[]{concatenate, date}, rowMapper);
+			if(group.equals("city")){
+				return jdbc.query("SELECT country, comunity, city, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE " +
+						"created >= ? GROUP BY country, comunity, city, target ORDER BY target",
+						new Object[]{concatenate, date},rowMapperGroupCity);
+
+			}
+			else if(group.equals("comunity")){
+				return jdbc.query("" +
+						"SELECT country, comunity, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE created >= ? GROUP BY " +
+						"country, comunity, target ORDER BY target", new Object[]{concatenate, date},rowMapperGroupComunity);
+			}
+			else{
+				return jdbc.query("SELECT country, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target," +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND s.target LIKE ?) WHERE created >= ? GROUP BY " +
+						"country, target ORDER BY target", new Object[]{concatenate, date},rowMapperGroupCountry);
+			}
+
 		} catch (Exception e) {
 			log.debug("When select for regurlar expresion " + er, e);
 			return null;
 		}
 	}
 
-	public List<Click> findByGroupUntil(String er, Date date) {
-
+	/**
+	 * Método que devuelve la información agregada hasta una fecha
+	 * @param er patrón
+	 * @param group indica sobre qué parametro se agrega la información (country, comunity o city)
+	 * @param date fecha de inicio
+	 * @return Lista de objetos que contiene toda información agregada
+	 */
+	public List<ClickAgr> findByGroupUntil(String er, String group, Date date) {
 		try {
-			String concatenate = "%"+er+"%";
-			return jdbc.query("SELECT c.* FROM shorturl s, click c WHERE (s.target LIKE ? AND c.hash=s.hash AND c.created <= ?)",
-					new Object[]{concatenate, date}, rowMapper);
+			String concatenate = "%" + er + "%";
+			if (group.equals("city")) {
+				return jdbc.query("SELECT country, comunity, city, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND s.target LIKE ?) WHERE created <= ? " +
+						"GROUP BY country, comunity, city, target ORDER BY target",
+						new Object[]{concatenate, date}, rowMapperGroupCity);
+
+			} else if (group.equals("comunity")) {
+				return jdbc.query("" +
+						"SELECT country, comunity, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE created <= ? GROUP BY " +
+						"country, comunity, target ORDER BY target", new Object[]{concatenate, date}, rowMapperGroupComunity);
+			} else {
+				return jdbc.query("SELECT country, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target," +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE created <= ? GROUP BY " +
+						"country, target ORDER BY target", new Object[]{concatenate, date}, rowMapperGroupCountry);
+			}
+
 		} catch (Exception e) {
 			log.debug("When select for regurlar expresion " + er, e);
 			return null;
 		}
 	}
 
-	public List<Click> findByGroupBounded(String er, Date dateSince, Date dateUntil) {
+	/**
+	 * Método que devuelve la información agregada acotada entre dos fechas
+	 * @param er patrón
+	 * @param group indica sobre qué parametro se agrega la información (country, comunity o city)
+	 * @param dateSince fecha inicio
+	 * @param dateUntil fecha fin
+     * @return Lista de objetos que contiene toda información agregada
+     */
+	public List<ClickAgr> findByGroupBounded(String er, String group, Date dateSince, Date dateUntil) {
 
 		try {
-			String concatenate = "%"+er+"%";
-			return jdbc.query("SELECT c.* FROM shorturl s, click c WHERE (s.target LIKE ? AND" +
-					" c.hash=s.hash AND c.created >= ? AND c.created <= ?)",
-					new Object[]{concatenate, dateSince, dateUntil}, rowMapper);
+			String concatenate = "%" + er + "%";
+			if (group.equals("city")) {
+				return jdbc.query("SELECT country, comunity, city, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE " +
+						"created >= ? AND created <= ? GROUP BY country, comunity, city, target " +
+						"ORDER BY target",
+						new Object[]{concatenate, dateSince, dateUntil}, rowMapperGroupCity);
+
+			} else if (group.equals("comunity")) {
+				return jdbc.query("" +
+						"SELECT country, comunity, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE " +
+						"created >= ? AND created <= ? GROUP BY country, comunity, target " +
+						"ORDER BY target", new Object[]{concatenate, dateSince, dateUntil}, rowMapperGroupComunity);
+			} else {
+				return jdbc.query("SELECT country, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target," +
+						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) WHERE " +
+						"created >= ? AND created <= ? GROUP BY country, target " +
+						"ORDER BY target", new Object[]{concatenate, dateSince, dateUntil}, rowMapperGroupCountry);
+			}
+
 		} catch (Exception e) {
 			log.debug("When select for regurlar expresion " + er, e);
 			return null;
