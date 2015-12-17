@@ -7,14 +7,12 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import org.springframework.web.client.RestTemplate;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.Hashtable;
 import java.util.Map;
@@ -39,8 +37,8 @@ public class QrGenerator {
     }
 
     private final String googleApiBase = "https://chart.googleapis.com/chart?&cht=qr";
-    private int xSize = 150;
-    private int ySize = 150;
+    private int xSize = 800;
+    private int ySize = 800;
     private String encoding;
     private correction correctionLevel = correction.L;
     private String uri;
@@ -262,4 +260,92 @@ public class QrGenerator {
             urlContent = "";
         }
     }
+
+    /**
+     * It creates teh Qr code
+     *
+     * @return the Qr code encoded in Base64
+     */
+    public String getEncodedLogoQr(String logo) {
+        BitMatrix matrix = null;
+        Writer writer = new QRCodeWriter();
+        Map<EncodeHintType, Object> hints = new Hashtable<>();
+        ErrorCorrectionLevel errorCorrectionLevel;
+        switch (correctionLevel) {
+            case M:
+                errorCorrectionLevel = ErrorCorrectionLevel.M;
+                break;
+            case Q:
+                errorCorrectionLevel = ErrorCorrectionLevel.Q;
+                break;
+            case H:
+                errorCorrectionLevel = ErrorCorrectionLevel.H;
+                break;
+            default:
+                errorCorrectionLevel = ErrorCorrectionLevel.L;
+                break;
+        }
+
+        hints.put(EncodeHintType.ERROR_CORRECTION, errorCorrectionLevel);
+
+
+
+        try {
+            matrix = writer.encode(content, BarcodeFormat.QR_CODE, xSize, ySize, hints);
+        } catch (WriterException e) {
+            e.printStackTrace();
+        }
+
+        //populating the image
+        BufferedImage codeImage = new BufferedImage(xSize, ySize, BufferedImage.TYPE_INT_RGB);
+        // Iterate through the matrix and draw the pixels to the image
+        for (int y = 0; y < ySize; y++) {
+            for (int x = 0; x < xSize; x++) {
+                int grayValue = (matrix.get(x, y) ? 0 : 1) & 0xff;
+                codeImage.setRGB(x, y, (grayValue == 0 ? foreGroundColor : backGroundColor));
+            }
+        }
+
+        //Get logo image
+        RestTemplate restTemplate = new RestTemplate();
+        byte[] second = restTemplate.getForObject(logo, byte[].class);
+        InputStream in = new ByteArrayInputStream(second);
+        BufferedImage logoImage;
+        try {
+            logoImage = ImageIO.read(in);
+        } catch (IOException e) {
+            return getEncodedQr();
+        }
+
+        if(logoImage.getHeight() > 30 || logoImage.getWidth() > 30) {
+            return getEncodedQr();
+        }
+
+        //
+        int deltaWidth = codeImage.getWidth() - logoImage.getWidth();
+        int deltaHeight = codeImage.getHeight() - logoImage.getHeight();
+
+
+        //Create result image
+        BufferedImage resultImage = new BufferedImage(xSize,ySize, BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics2D g = (Graphics2D) resultImage.getGraphics();
+
+        g.drawImage(codeImage,0,0,null);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+
+        g.drawImage(logoImage, (int) Math.round(deltaWidth / 2), (int) Math.round(deltaHeight / 2), null);
+
+        byte[] byteArray = new byte[0];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(resultImage, "png", baos);
+            byteArray = baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return encodeBase64String(byteArray);
+    }
+
 }
