@@ -17,10 +17,11 @@ public class ShortURL {
 	private String country;
 	private String qrCode;
 	private String qrApi;
+	private int tiempo;
 
 	public ShortURL(String hash, String target, URI uri, String sponsor,
 			Date created, String owner, Integer mode, Boolean safe, String ip,
-			String country, String qrApi, String qrCode) {
+			String country, String qrApi, String qrCode, int tiempo) {
 		this.hash = hash;
 		this.target = target;
 		this.uri = uri;
@@ -33,6 +34,7 @@ public class ShortURL {
 		this.country = country;
 		this.qrApi = qrApi;
 		this.qrCode = qrCode;
+		this.tiempo = tiempo;
 
 	}
 
@@ -86,7 +88,7 @@ public class ShortURL {
 		return qrApi;
 	}
 
-	//	public void setQrCode(String qrCode) {
-	//		this.qrCode = qrCode;
-	//	}
+	public int getTiempo() {
+		return tiempo;
+	}
 }

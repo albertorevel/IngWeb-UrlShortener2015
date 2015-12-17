@@ -1,5 +1,6 @@
 package urlshortener2015.fuzzywuzzy.web;
 
+import javax.print.attribute.standard.Media;
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.common.hash.Hashing;
@@ -9,7 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.web.client.RestTemplate;
+import urlshortener2015.fuzzywuzzy.Application;
 import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
 import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 import urlshortener2015.fuzzywuzzy.domain.Click;
@@ -27,6 +31,8 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
@@ -44,13 +50,60 @@ public class UrlShortenerController {
 	protected ClickRepository clickRepository;
 	private static final Logger logger = LoggerFactory.getLogger(UrlShortenerController.class);
 
+	@RequestMapping(value = "/final/{id:(?!link|index).*}", method = RequestMethod.GET)
+	public ResponseEntity<?> getFinal(@PathVariable String id, HttpServletRequest request) {
+		ShortURL l = shortURLRepository.findByKey(id);
+		HttpHeaders h = new HttpHeaders();
+		h.setLocation(URI.create(l.getTarget()));
+		return new ResponseEntity<>(h, HttpStatus.valueOf(l.getMode()));
+	}
+//	@RequestMapping(produces = "application/html", value = "/publicidad", method = RequestMethod.GET)
+//	public ResponseEntity<?> getPublicidad(HttpServletRequest request) {
+//		String body = "<!doctype html>\n" +
+//				"<head>\n" +
+//				"<script type=\"text/javascript\">\n" +
+//				"function redireccionar(){\n" +
+//				"location.href=\"final\"\n" +
+//				"}\n" +
+//				"setTimeout (\"redireccionar()\", 5000);\n" +
+//				"</script>\n" +
+//				"</head>\n" +
+//				"<body>\n" +
+//				"<p> Pagina de publicidad </p>\n" +
+//				"</body>\n" +
+//				"</html>";
+//		HttpHeaders responseHeaders = new HttpHeaders();
+//		responseHeaders.setContentType(MediaType.TEXT_HTML);
+//		return new ResponseEntity<Object>(body,responseHeaders,HttpStatus.OK);
+//	}
 
 	@RequestMapping(value = "/{id:(?!link|index).*}", method = RequestMethod.GET)
 	public ResponseEntity<?> redirectTo(@PathVariable String id, HttpServletRequest request) {
 		ShortURL l = shortURLRepository.findByKey(id);
 		if (l != null) {
 			createAndSaveClick(id, extractIP(request));
-			return createSuccessfulRedirectToResponse(l);
+			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
+			if(l.getTiempo()!= 0){
+				String body = "<!doctype html>\n" +
+						"<head>\n" +
+						"<script type=\"text/javascript\">\n" +
+						"function redireccionar(){\n" +
+						"location.href=\"final/" + id +"\"\n" +
+						"}\n" +
+						"setTimeout (\"redireccionar()\"," + l.getTiempo() +");\n" +
+						"</script>\n" +
+						"</head>\n" +
+						"<body>\n" +
+						"<p> Pagina de publicidad </p>\n" +
+						"</body>\n" +
+						"</html>";
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.setContentType(MediaType.TEXT_HTML);
+				return new ResponseEntity<Object>(body,responseHeaders,HttpStatus.OK);
+			}
+			else {
+				return re;
+			}
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
@@ -68,10 +121,11 @@ public class UrlShortenerController {
 											  @RequestParam(value = "brand", required = false) String brand,
 											  @RequestParam(value = "vCardName", required = false) String vCard,
 											  @RequestParam(value = "correction", required = false) String correction,
+											  @RequestParam(value = "tiempo", required = false) int tiempo,
 											  HttpServletRequest request) {
 		logger.info("Requested new short for uri " + url);
 		ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCard, correction, UUID
-				.randomUUID().toString(), extractIP(request));
+				.randomUUID().toString(), extractIP(request), tiempo);
 		if (su != null) {
 			HttpHeaders h = new HttpHeaders();
 			h.setLocation(su.getUri());
@@ -90,7 +144,7 @@ public class UrlShortenerController {
 
 	protected ShortURL createAndSaveIfValid(String url, String sponsor,
 											String brand, String vCardName, String correction,
-											String owner, String ip) {
+											String owner, String ip, int tiempo) {
 		UrlValidator urlValidator = new UrlValidator(new String[]{"http",
 				"https"});
 		if (urlValidator.isValid(url)) {
@@ -105,7 +159,7 @@ public class UrlShortenerController {
 			ShortURL su = new ShortURL(id, url,
 					uri, sponsor, new Date(
 					System.currentTimeMillis()), owner,
-					HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef);
+					HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef, tiempo);
 			return shortURLRepository.save(su);
 		} else {
 			return null;
