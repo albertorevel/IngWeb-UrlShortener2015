@@ -86,13 +86,14 @@ public class UrlShortenerController {
 			createAndSaveClick(id, extractIP(request));
 			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
 			if(l.getTiempo()!= 0){
+                int tiempo = l.getTiempo()*1000;
 				String body = "<!doctype html>\n" +
 						"<head>\n" +
 						"<script type=\"text/javascript\">\n" +
 						"function redireccionar(){\n" +
 						"location.href=\"final/" + id +"\"\n" +
 						"}\n" +
-						"setTimeout (\"redireccionar()\"," + l.getTiempo() +");\n" +
+						"setTimeout (\"redireccionar()\"," + tiempo +");\n" +
 						"</script>\n" +
 						"</head>\n" +
 						"<body>\n" +
@@ -164,7 +165,7 @@ public class UrlShortenerController {
             if (correction == null) {
                 correction = "L";
             }
-            QrGenerator qrGenerator = new QrGenerator(150, 150, "UTF-8", correction.charAt(0), uri.toString(), vCardName, 0xFFFFFFF, 0);
+            QrGenerator qrGenerator = new QrGenerator(150, 150, "UTF-8", correction.charAt(0), uri.toString(), vCardName, 0xFFFFFFF, 0x0000ff);
 //            String qrApi = qrGenerator.getQrApi();
             String qrApi = uri+"/qr";
 			String qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
