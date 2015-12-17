@@ -67,7 +67,7 @@ public class UrlShortenerController {
             final HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.IMAGE_PNG);
 
-            return new ResponseEntity<byte[]>(bytes, headers, HttpStatus.OK);
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -85,8 +85,8 @@ public class UrlShortenerController {
 		if (l != null) {
 			createAndSaveClick(id, extractIP(request));
 			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
-			if(l.getTiempo()!= 0){
-                int tiempo = l.getTiempo()*1000;
+			if(l.getTiempo()!= null){
+                int tiempo = Integer.parseInt(l.getTiempo())*1000;
 				String body = "<!doctype html>\n" +
 						"<head>\n" +
 						"<script type=\"text/javascript\">\n" +
@@ -125,7 +125,7 @@ public class UrlShortenerController {
                                               @RequestParam(value = "vCardName", required = false) String vCardName,
                                               @RequestParam(value = "correction", required = false) String correction,
                                               @RequestParam(value = "logo", required = false) String logo,
-											  @RequestParam(value = "tiempo", required = false) int tiempo,
+											  @RequestParam(value = "tiempo", required = false) String tiempo,
                                               HttpServletRequest request) {
         logger.info("Requested new short for uri " + url);
         ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
@@ -150,7 +150,7 @@ public class UrlShortenerController {
 
     protected ShortURL createAndSaveIfValid(String url, String sponsor,
                                             String brand, String vCardName, String correction,
-                                            String owner, String ip, String logo, int tiempo) {
+                                            String owner, String ip, String logo, String tiempo) {
         UrlValidator urlValidator = new UrlValidator(new String[]{"http",
                 "https"});
         if (urlValidator.isValid(url)) {

@@ -27,14 +27,12 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
     private static final RowMapper<ShortURL> rowMapper = new RowMapper<ShortURL>() {
         @Override
         public ShortURL mapRow(ResultSet rs, int rowNum) throws SQLException {
-            ShortURL shortURL = new ShortURL(rs.getString("hash"), rs.getString("target"),
+            return new ShortURL(rs.getString("hash"), rs.getString("target"),
                     null, rs.getString("sponsor"), rs.getDate("created"),
                     rs.getString("owner"), rs.getInt("mode"),
                     rs.getBoolean("safe"), rs.getString("ip"),
                     rs.getString("country"), rs.getString("qrApi"),
-                    rs.getString("qrCode"), rs.getInt("tiempo"));
-//            shortURL.setQrCode(rs.getString("qrcode"));
-            return shortURL;
+                    rs.getString("qrCode"), rs.getString("tiempo"));
         }
     };
 
