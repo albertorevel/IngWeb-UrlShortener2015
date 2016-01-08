@@ -150,7 +150,6 @@ public class UrlShortenerController {
 											  @RequestParam(value = "qrSize", required = false) String qrSize,
 											  @RequestParam(value = "fgColour", required = false) String fgCol,
 											  @RequestParam(value = "bgColour", required = false) String bgCol,
-
                                               HttpServletRequest request) {
         logger.info("Requested new short for uri " + url);
         ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
@@ -220,14 +219,21 @@ public class UrlShortenerController {
 
             QrGenerator qrGenerator = new QrGenerator(qrSize, qrSize, "UTF-8", correction.charAt(0), uri.toString(), vCardName, bgColour, fgColour);
             String qrApi = qrGenerator.getQrApi();
-//            String qrApi = qrGenerator.getGoogleQrApi()
+            //TODO google option
+//            String qrApi = qrGenerator.getGoogleQrApi();
+//             String qrDef = qrGenerator.getEncodedQr();
 			String qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
-//            String qrDef = qrGenerator.getEncodedQr();
+
             ShortURL su = new ShortURL(id, url,
                     uri, sponsor, new Date(
                     System.currentTimeMillis()), owner,
                     HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef, tiempo);
-            return shortURLRepository.save(su);
+
+            ShortURL shortURL = shortURLRepository.findByKey(id);
+            if (shortURL != null) {
+                shortURLRepository.update(su);
+                return su;
+            } else return shortURLRepository.save(su);
         } else {
             return null;
         }
