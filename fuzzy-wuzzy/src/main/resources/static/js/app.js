@@ -10,7 +10,6 @@ function initMap() {
                 zoom: 4
             };
             var map = new google.maps.Map(document.getElementById('map'), myOptions);
-            var h = map.
             $.each(msg, function (i, item) {
                 var puntoMarc = new google.maps.LatLng(item.latitud, item.longitud);
                 var marker = new google.maps.Marker({

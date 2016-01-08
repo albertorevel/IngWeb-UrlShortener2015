@@ -1,4 +1,4 @@
-package urlshortener2015.common.web;
+package urlshortener2015.fuzzywuzzy.web;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static urlshortener2015.common.web.fixture.ShortURLFixture.someUrl;
+import static urlshortener2015.fuzzywuzzy.web.fixture.ShortURLFixture.someUrl;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,10 +21,9 @@ import org.mockito.stubbing.Answer;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import urlshortener2015.common.domain.ShortURL;
-import urlshortener2015.common.repository.ClickRepository;
-import urlshortener2015.common.repository.ShortURLRepository;
-import urlshortener2015.common.web.UrlShortenerController;
+import urlshortener2015.fuzzywuzzy.domain.ShortURL;
+import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
+import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 
 public class UrlShortenerTests {
 

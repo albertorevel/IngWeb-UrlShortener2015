@@ -14,7 +14,10 @@ CREATE TABLE SHORTURL(
 	MODE		INTEGER,					-- Redirect mode
 	SAFE		BOOLEAN,						-- Safe target
 	IP			VARCHAR(20),				-- IP
-	COUNTRY		VARCHAR(50)					-- Country
+	COUNTRY		VARCHAR(50),					-- Country
+	QRAPI		VARCHAR(1024),				--QR CODE API QUERY
+	QRCODE		VARCHAR(8000),      		--QR CODE IN BASE 64
+	TIEMPO      VARCHAR(200)                --PUBLICIDAD
 );
 
 -- Click

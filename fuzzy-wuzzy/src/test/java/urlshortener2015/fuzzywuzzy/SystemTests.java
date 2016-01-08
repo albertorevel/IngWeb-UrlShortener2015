@@ -125,7 +125,7 @@ public class SystemTests {
 		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
 		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
 		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
-		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4"));
+		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4/qr"));
 	}
 
 	@Test
