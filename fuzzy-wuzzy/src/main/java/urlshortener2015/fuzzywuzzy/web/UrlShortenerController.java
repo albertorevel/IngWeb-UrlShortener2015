@@ -33,6 +33,7 @@ import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.spec.ECField;
 import java.sql.Date;
 import java.util.List;
 import java.util.Map;
@@ -146,12 +147,14 @@ public class UrlShortenerController {
                                               @RequestParam(value = "correction", required = false) String correction,
                                               @RequestParam(value = "logo", required = false) String logo,
 											  @RequestParam(value = "tiempo", required = false) String tiempo,
+											  @RequestParam(value = "qrSize", required = false) String qrSize,
+											  @RequestParam(value = "fgColour", required = false) String fgCol,
+											  @RequestParam(value = "bgColour", required = false) String bgCol,
+
                                               HttpServletRequest request) {
         logger.info("Requested new short for uri " + url);
         ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
-                .randomUUID().toString(), extractIP(request), logo, tiempo);
-//		ShortURL su = createAndSaveIfValid(url, sponsor, brand, "test me", correction, UUID
-//				.randomUUID().toString(), extractIP(request));
+                .randomUUID().toString(), extractIP(request), logo, tiempo, qrSize, fgCol, bgCol);
         if (su != null) {
             HttpHeaders h = new HttpHeaders();
             h.setLocation(su.getUri());
@@ -170,7 +173,8 @@ public class UrlShortenerController {
 
     protected ShortURL createAndSaveIfValid(String url, String sponsor,
                                             String brand, String vCardName, String correction,
-                                            String owner, String ip, String logo, String tiempo) {
+                                            String owner, String ip, String logo, String tiempo,
+                                            String qrPSize, String fgPColour, String bgPColour) {
         UrlValidator urlValidator = new UrlValidator(new String[]{"http",
                 "https"});
         if (urlValidator.isValid(url)) {
@@ -180,17 +184,45 @@ public class UrlShortenerController {
                     methodOn(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class).redirectTo(
                             id, null)).toUri();
 
+            //If we dont generate qr with our generator
 //			RestTemplate restTemplate = new RestTemplate();
 //			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
+
+
+            int qrSize = 500;
+            int bgColour = 0xFFFFFF;
+            int fgColour = 0;
             if (correction == null) {
                 correction = "L";
             }
-            QrGenerator qrGenerator = new QrGenerator(150, 150, "UTF-8", correction.charAt(0), uri.toString(), vCardName, 0xFFFFFFF, 0x0000ff);
-//            String qrApi = qrGenerator.getQrApi();
-            String qrApi = uri+"/qr";
+            if (qrPSize != null) {
+               try {
+                   qrSize = Integer.parseInt(qrPSize);
+               } catch (NumberFormatException e) {
+                   qrSize = 500;
+               }
+            }
+            if (bgPColour != null) {
+                try {
+                    bgColour = Integer.parseInt(bgPColour);
+            } catch (NumberFormatException e) {
+                bgColour = 500;
+            }
+            }
+            if (fgPColour != null) {
+                try {
+                    fgColour = Integer.parseInt(fgPColour);
+                } catch (NumberFormatException e) {
+                    fgColour = 500;
+                }
+            }
+
+
+            QrGenerator qrGenerator = new QrGenerator(qrSize, qrSize, "UTF-8", correction.charAt(0), uri.toString(), vCardName, bgColour, fgColour);
+            String qrApi = qrGenerator.getQrApi();
+//            String qrApi = qrGenerator.getGoogleQrApi()
 			String qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
 //            String qrDef = qrGenerator.getEncodedQr();
-//            String qrDef = qrGenerator.getEncodedLogoQr("http://www.gc.cuny.edu/shared/images/shared/LinkedIn_25px_25px.png");
             ShortURL su = new ShortURL(id, url,
                     uri, sponsor, new Date(
                     System.currentTimeMillis()), owner,
