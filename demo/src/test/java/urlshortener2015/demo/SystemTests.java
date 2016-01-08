@@ -1,5 +1,6 @@
 package urlshortener2015.demo;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,9 +64,9 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
 		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
 		ReadContext rc = JsonPath.parse(entity.getBody());
-		assertThat(rc.read("$.hash"), is("f684a3c4"));
-		assertThat(rc.read("$.uri"), is("http://localhost:"+ this.port+"/f684a3c4"));
-		assertThat(rc.read("$.target"), is("http://example.com/"));
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.sponsor"), is(nullValue()));
 	
 	

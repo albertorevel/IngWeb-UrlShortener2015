@@ -1,6 +1,8 @@
 package urlshortener2015.fuzzywuzzy.web;
 
 import com.google.common.hash.Hashing;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import urlshortener2015.fuzzywuzzy.domain.Click;
+import urlshortener2015.fuzzywuzzy.domain.ClickAgr;
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
 import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
 import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
@@ -19,6 +22,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
@@ -96,6 +101,32 @@ public class UrlShortenerController {
 		}
 	}
 
+	@RequestMapping(value = "/info", method = RequestMethod.POST)
+	public ResponseEntity<JSONArray> info(@RequestParam("patron") String patron,
+										 @RequestParam("group") String group,
+											  HttpServletRequest request) {
+		logger.info("Requested info" + patron);
+		List<ClickAgr> list = clickRepository.findByGroup(patron, group);
+		if (list != null) {
+			HttpHeaders h = new HttpHeaders();
+			return new ResponseEntity<>(convert(list), h, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	@RequestMapping(value = "/map", method = RequestMethod.GET)
+	public ResponseEntity<?> getMap(HttpServletRequest request) {
+		List<Click> list = clickRepository.getAll();
+		//Si hay datos
+		if (list != null) {
+			HttpHeaders h = new HttpHeaders();
+			return new ResponseEntity<>(convert2(list), h, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+
 	protected void createAndSaveClick(String hash, String ip, String country, String comunidad, String city, String latitud, String longitud) {
 		Click cl = new Click(null, hash, new Date(System.currentTimeMillis()),
 				null, null, null, ip, country, comunidad, city, latitud, longitud);
@@ -135,5 +166,33 @@ public class UrlShortenerController {
 
 	protected String extractIP(HttpServletRequest request) {
 		return request.getRemoteAddr();
+	}
+
+	public JSONArray  convert(List<ClickAgr> data) {
+		JSONArray arr = new JSONArray();
+		JSONObject tmp;
+		for(int i = 0; i < data.size(); i++) {
+			tmp = new JSONObject();
+			tmp.put("country",data.get(i).getCountry());
+			tmp.put("comunity",data.get(i).getComunity());
+			tmp.put("city",data.get(i).getCity());
+			tmp.put("target",data.get(i).getTarget());
+			tmp.put("count",data.get(i).getCount());
+			arr.add(tmp);
+		}
+		return arr;
+	}
+
+	public JSONArray  convert2(List<Click> data) {
+		JSONArray arr = new JSONArray();
+		JSONObject tmp;
+		for(int i = 0; i < data.size(); i++) {
+			tmp = new JSONObject();
+			tmp.put("latitud",data.get(i).getLatitud());
+			tmp.put("longitud",data.get(i).getLongitud());
+			tmp.put("ip",data.get(i).getIp());
+			arr.add(tmp);
+		}
+		return arr;
 	}
 }

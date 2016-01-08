@@ -79,7 +79,10 @@ public class ClickRepositoryImpl implements ClickRepository {
 	public ClickRepositoryImpl() {
 	}
 
-	public ClickRepositoryImpl(JdbcTemplate jdbc) {this.jdbc = jdbc;}
+	public ClickRepositoryImpl(JdbcTemplate jdbc) {
+		this.jdbc = jdbc;
+		meterDatos();
+	}
 
 
 
@@ -208,6 +211,7 @@ public class ClickRepositoryImpl implements ClickRepository {
 	 * @param group indica sobre qué parametro se agrega la información (country, comunity o city)
 	 * @return Lista de objetos que contiene toda información agregada
 	 */
+	@Override
 	public List<ClickAgr> findByGroup(String er,String group) {
 
 		try {
@@ -215,19 +219,19 @@ public class ClickRepositoryImpl implements ClickRepository {
 			if(group.equals("city")){
 				return jdbc.query("SELECT country, comunity, city, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
 						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) " +
-						"GROUP BY country, comunity, city, target ORDER BY target",
+						"GROUP BY country, comunity, city, target ORDER BY target, country, comunity, city",
 						new Object[]{concatenate},rowMapperGroupCity);
 
 			}
 			else if(group.equals("comunity")){
 				return jdbc.query("SELECT country, comunity, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
 						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) GROUP BY country, comunity, target " +
-						"ORDER BY target", new Object[]{concatenate},rowMapperGroupComunity);
+						"ORDER BY target, country, comunity", new Object[]{concatenate},rowMapperGroupComunity);
 			}
 			else{
 				return jdbc.query("SELECT country, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target," +
 						"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) GROUP BY country, target " +
-						"ORDER BY target", new Object[]{concatenate},rowMapperGroupCountry);
+						"ORDER BY target, country", new Object[]{concatenate},rowMapperGroupCountry);
 			}
 
 		} catch (Exception e) {
@@ -341,5 +345,89 @@ public class ClickRepositoryImpl implements ClickRepository {
 			log.debug("When select for regurlar expresion " + er, e);
 			return null;
 		}
+	}
+
+
+	public List<Click> getAll() {
+		try {
+			return jdbc.query("SELECT * FROM Click", rowMapper);
+		} catch (Exception e) {
+			log.debug("When select clicks.", e);
+			return null;
+		}
+	}
+	private void meterDatos() {
+		String url = "http://www.unizar.es/";
+		String id = Hashing.murmur3_32()
+				.hashString(url, StandardCharsets.UTF_8).toString();
+		Click data = new Click(null, id, new Date(2015,10,2),
+				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", "41.64886959999999", "-0.889742100000035");
+		save(data);
+		data = new Click(null, id, new Date(2015,5,13),
+				null, null, null, "74.125.45.100", "United States", "New York", "New York", "37.09024", "-95.71289100000001");
+		save(data);
+		data = new Click(null, id, new Date(2015,9,3),
+				null, null, null, "74.125.45.100", "Marruecos", "Tanger", "MarruecosCity", "31.791702", "-7.092620000000011");
+		save(data);
+		data = new Click(null, id, new Date(2015,2,5),
+				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", "40.4167754", "-3.7037901999999576");
+		save(data);
+		data = new Click(null, id, new Date(2015,11,4),
+				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "39.09024", "-96.71289100000001");
+		save(data);
+		data = new Click(null, id, new Date(2015,1,1),
+				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "40.64886959999999", "-0.889742100000035");
+		save(data);
+		data = new Click(null, id, new Date(2014,12,17),
+				null, null, null, "74.125.45.100", "Marruecos", "Gran Casablanca", "Marruecolandia", "31.791702", "-6.092620000000011");
+		save(data);
+		url = "http://www.google.es/";
+		id = Hashing.murmur3_32()
+				.hashString(url, StandardCharsets.UTF_8).toString();
+		data = new Click(null, id, new Date(2015,10,2),
+				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", "41.64886959999999", "-0.889742100000035");
+		save(data);
+		data = new Click(null, id, new Date(2015,5,13),
+				null, null, null, "74.125.45.100", "United States", "New York", "New York", "37.09024", "-95.71289100000001");
+		save(data);
+		data = new Click(null, id, new Date(2015,9,3),
+				null, null, null, "74.125.45.100", "Marruecos", "Tanger", "MarruecosCity", "32.791702", "-7.092620000000011");
+		save(data);
+		data = new Click(null, id, new Date(2015,2,5),
+				null, null, null, "74.125.45.100", "España", "Madrid", "Huesca", "40.4167754", "-3.7037901999999576");
+		save(data);
+		data = new Click(null, id, new Date(2014,11,4),
+				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "39.09024", "-96.71289100000001");
+		save(data);
+		data = new Click(null, id, new Date(2015,1,1),
+				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "40.64886959999999", "-0.889742100000035");
+		save(data);
+		data = new Click(null, id, new Date(2014,12,17),
+				null, null, null, "74.125.45.100", "Marruecos", "Gran Casablanca", "MarruecosCity", "31.791702", "-6.092620000000011");
+		save(data);
+		url = "http://www.ozanganoo.es/";
+		id = Hashing.murmur3_32()
+				.hashString(url, StandardCharsets.UTF_8).toString();
+		data = new Click(null, id, new Date(2014,10,2),
+				null, null, null, "74.125.45.100", "China", "Yong", "Yang", "37.406", "-122.079");
+		save(data);
+		data = new Click(null, id, new Date(2015,5,13),
+				null, null, null, "74.125.45.100", "United States", "California", "California", "37.09024", "-95.712891");
+		save(data);
+		data = new Click(null, id, new Date(2014,9,3),
+				null, null, null, "74.125.45.100", "Marruecos", "Califan", "MarruecosCity", "32.791702", "-8.0926200");
+		save(data);
+		data = new Click(null, id, new Date(2015,2,5),
+				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", "40.4167754", "-3.7037901");
+		save(data);
+		data = new Click(null, id, new Date(2015,11,4),
+				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "35.861660", "104.195396");
+		save(data);
+		data = new Click(null, id, new Date(2015,1,1),
+				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "40.6488695", "-0.8897421");
+		save(data);
+		data = new Click(null, id, new Date(2014,12,17),
+				null, null, null, "74.125.45.100", "Marruecos", "Maroco", "Moroco", "31.001702", "-7.092620000000011");
+		save(data);
 	}
 }

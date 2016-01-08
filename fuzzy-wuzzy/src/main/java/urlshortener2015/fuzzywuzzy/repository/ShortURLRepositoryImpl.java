@@ -48,7 +48,34 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
     public ShortURLRepositoryImpl() {
     }
 
-    public ShortURLRepositoryImpl(JdbcTemplate jdbc) {this.jdbc = jdbc;}
+    public ShortURLRepositoryImpl(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+        //INTRODUCIMOS DATOS DE PRUEBA
+        String url = "http://www.unizar.es/";
+        String id = Hashing.murmur3_32()
+                .hashString(url, StandardCharsets.UTF_8).toString();
+        ShortURL su = new ShortURL(id, url,
+                null, null, new Date(
+                System.currentTimeMillis()), null,
+                HttpStatus.TEMPORARY_REDIRECT.value(), true, "::::1", null, null, null);
+        save(su);
+        url = "http://www.google.es/";
+        id = Hashing.murmur3_32()
+                .hashString(url, StandardCharsets.UTF_8).toString();
+        su = new ShortURL(id, url,
+                null, null, new Date(
+                System.currentTimeMillis()), null,
+                HttpStatus.TEMPORARY_REDIRECT.value(), true, "::::1", null, null, null);
+        save(su);
+        url = "http://www.ozanganoo.es/";
+        id = Hashing.murmur3_32()
+                .hashString(url, StandardCharsets.UTF_8).toString();
+        su = new ShortURL(id, url,
+                null, null, new Date(
+                System.currentTimeMillis()), null,
+                HttpStatus.TEMPORARY_REDIRECT.value(), true, "::::1", null, null, null);
+        save(su);
+    }
 
     @Override
     public ShortURL findByKey(String id) {

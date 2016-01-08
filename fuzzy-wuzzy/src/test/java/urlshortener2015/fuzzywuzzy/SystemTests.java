@@ -30,6 +30,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -87,6 +88,7 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://example.com/")));
 	}
 
+	@Test
 	private ResponseEntity<String> postLink(String url) {
 		MultiValueMap<String, Object> parts = new LinkedMultiValueMap<String, Object>();
 		parts.add("url", url);
@@ -126,6 +128,7 @@ public class SystemTests {
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4"));
 	}
 
+	@Test
 	public void testCreateVCardQrCode() throws Exception {
 		String[][] params = new String[][]{{"vCardName","Example page"}};
 		ResponseEntity<String> entity = postLink("http://example.com/",params);
@@ -139,6 +142,7 @@ public class SystemTests {
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=BEGIN%3AVCARD%0AVERSION%3A4.0%0AN%3AExample+page%0AURL%3Ahttp://localhost:" + this.port + "/bf19bedb%0AEND%3AVCARD"));
 	}
 
+	@Test
 	public void testCreateCorrectionQrCode() throws Exception {
 		String[][] params = new String[][]{{"correction","L"}};
 		ResponseEntity<String> entity = postLink("http://example.com/",params);
@@ -151,5 +155,35 @@ public class SystemTests {
 		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4&chld=L"));
 	}
+
+	@Test
+	public void testSaveInfo() throws Exception {
+		long n = repository.count();
+		postLink("http://example.com/");
+		ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
+				"http://localhost:" + this.port
+						+ "/f684a3c4", String.class);
+		assertThat(entity.getStatusCode(), is(HttpStatus.TEMPORARY_REDIRECT));
+		assertThat(entity.getHeaders().getLocation(), is(new URI("http://example.com/")));
+		assertThat(n+1,Matchers.<Object>is(repository.count()));
+	}
+
+//	@Test
+//	public void mockInetAddress() throws Exception
+//	{
+//		new Expectations()
+//		{
+//			InetAddress mockIP;
+//
+//			{
+//				InetAddress.getByName(withAny("")); returns(mockIP);
+//			}
+//		};
+//
+//		InetAddress ipAddress = InetAddress.getByName("dummy-host-name");
+//		assertNotNull(ipAddress); // this is "mockIP"
+//	}
+
+
 }
 
