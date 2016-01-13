@@ -134,7 +134,7 @@ public class SystemTests {
 		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?&cht=qr&chs=500x500&choeUTF-8&chld=L&chl=http%3A%2F%2Flocalhost%3A"+ this.port+"%2Ff684a3c4"));
 	}
-    
+
 	public void testCreateVCardQrExternalCode() throws Exception {
 		String[][] params = new String[][]{{"external",""},{"vCardName","Example page"}};
 		ResponseEntity<String> entity = postLink("http://example.com/",params);
