@@ -87,7 +87,7 @@ public class UrlShortenerController {
 		if (l != null) {
 			createAndSaveClick(id, extractIP(request));
 			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
-			if(!l.getTiempo().equals("")){
+			if(l.getTiempo()!=null && !l.getTiempo().equals("")){
                 int tiempoS = Integer.parseInt(l.getTiempo());
                 int tiempo = tiempoS*1000;
 				String body = "<!doctype html>\n" +
@@ -190,9 +190,6 @@ public class UrlShortenerController {
             int fgColour = 0;
             if (correction == null) {
                 correction = "L";
-            }
-            if( tiempo == null){
-                tiempo = "";
             }
             if (qrPSize != null) {
                try {
