@@ -1,5 +1,8 @@
 package urlshortener2015.fuzzywuzzy.web;
 
+import javax.print.attribute.standard.Media;
+import javax.servlet.http.HttpServletRequest;
+
 import com.google.common.hash.Hashing;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.tomcat.util.codec.binary.Base64;
@@ -10,6 +13,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.web.client.RestTemplate;
+import urlshortener2015.fuzzywuzzy.Application;
+import urlshortener2015.fuzzywuzzy.repository.ClickRepository;
+import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 import org.springframework.web.bind.annotation.*;
 import urlshortener2015.fuzzywuzzy.domain.Click;
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
@@ -19,12 +33,15 @@ import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.spec.ECField;
 import java.sql.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
-
 
 @RestController
 public class UrlShortenerController {
@@ -52,22 +69,70 @@ public class UrlShortenerController {
             final HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.IMAGE_PNG);
 
-            return new ResponseEntity<byte[]>(bytes, headers, HttpStatus.OK);
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-
-    @RequestMapping(value = "/{id:(?!link|index).*}", method = RequestMethod.GET)
-    public ResponseEntity<?> redirectTo(@PathVariable String id, HttpServletRequest request) {
-        ShortURL l = shortURLRepository.findByKey(id);
-        if (l != null) {
-            createAndSaveClick(id, extractIP(request));
-            return createSuccessfulRedirectToResponse(l);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
+	@RequestMapping(value = "/final/{id:(?!link|index).*}", method = RequestMethod.GET)
+	public ResponseEntity<?> getFinal(@PathVariable String id, HttpServletRequest request) {
+		ShortURL l = shortURLRepository.findByKey(id);
+		HttpHeaders h = new HttpHeaders();
+		h.setLocation(URI.create(l.getTarget()));
+		return new ResponseEntity<>(h, HttpStatus.valueOf(l.getMode()));
+	}
+	@RequestMapping(value = "/{id:(?!link|index).*}", method = RequestMethod.GET)
+	public ResponseEntity<?> redirectTo(@PathVariable String id, HttpServletRequest request) {
+		ShortURL l = shortURLRepository.findByKey(id);
+		if (l != null) {
+			createAndSaveClick(id, extractIP(request));
+			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
+			if(l.getTiempo()!= null){
+                int tiempoS = Integer.parseInt(l.getTiempo());
+                int tiempo = tiempoS*1000;
+				String body = "<!doctype html>\n" +
+						"<head>\n" +
+						"<script type=\"text/javascript\">\n" +
+						"function redireccionar(){\n" +
+						"location.href=\"final/" + id +"\"\n" +
+						"}\n" +
+						"setTimeout (\"redireccionar()\"," + tiempo +");\n" +
+						"</script>\n" +
+						"</head>\n" +
+						"<body>\n" +
+                        "<div class= \"row\">\n" +
+                        "<div align=\"center\">\n" +
+                        "<h1> Pagina de publicidad </h1>\n" +
+                        "<script type=\"text/javascript\">\n" +
+                        "var segundos = "+ tiempoS +";\n" +
+                        "function contar(){\n" +
+                        "if(segundos <= 0){\n" +
+                        "document.getElementById(\"contador\").innerHTML = \"Redireccionando ...\";\n" +
+                        "} else {\n" +
+                        "segundos--;\n" +
+                        "document.getElementById(\"contador\").innerHTML = \"Le redireccionaremos automáticamente en \" + segundos  + \" segundos.\";\n" +
+                        "}\n" +
+                        "}\n" +
+                        "setInterval(\"contar()\",1000);\n" +
+                        "</script>\n" +
+                        "<div id=\"contador\">Le redireccionaremos automáticamente en "+tiempoS+" segundos</div>\n" +
+                        "<center>\n" +
+                        "<img src=\"http://www.tiempodepublicidad.com/wp-content/themes/gridthemeresponsiveFull/images/tdp/tiempo-de-publicidad.png\" alt=\"Publicidad\">" +
+                        "</center>\n" +
+                        "</div>\n" +
+						"</body>\n" +
+						"</html>";
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.setContentType(MediaType.TEXT_HTML);
+				return new ResponseEntity<Object>(body,responseHeaders,HttpStatus.OK);
+			}
+			else {
+				return re;
+			}
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
 
     protected ResponseEntity<?> createSuccessfulRedirectToResponse(ShortURL l) {
         HttpHeaders h = new HttpHeaders();
@@ -82,12 +147,15 @@ public class UrlShortenerController {
                                               @RequestParam(value = "vCardName", required = false) String vCardName,
                                               @RequestParam(value = "correction", required = false) String correction,
                                               @RequestParam(value = "logo", required = false) String logo,
+											  @RequestParam(value = "tiempo", required = false) String tiempo,
+											  @RequestParam(value = "qrSize", required = false) String qrSize,
+											  @RequestParam(value = "fgColour", required = false) String fgCol,
+											  @RequestParam(value = "bgColour", required = false) String bgCol,
+											  @RequestParam(value = "external", required = false) String external,
                                               HttpServletRequest request) {
         logger.info("Requested new short for uri " + url);
         ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
-                .randomUUID().toString(), extractIP(request), logo);
-//		ShortURL su = createAndSaveIfValid(url, sponsor, brand, "test me", correction, UUID
-//				.randomUUID().toString(), extractIP(request));
+                .randomUUID().toString(), extractIP(request), logo, tiempo, qrSize, fgCol, bgCol, external);
         if (su != null) {
             HttpHeaders h = new HttpHeaders();
             h.setLocation(su.getUri());
@@ -106,7 +174,8 @@ public class UrlShortenerController {
 
     protected ShortURL createAndSaveIfValid(String url, String sponsor,
                                             String brand, String vCardName, String correction,
-                                            String owner, String ip, String logo) {
+                                            String owner, String ip, String logo, String tiempo,
+                                            String qrPSize, String fgPColour, String bgPColour, String external) {
         UrlValidator urlValidator = new UrlValidator(new String[]{"http",
                 "https"});
         if (urlValidator.isValid(url)) {
@@ -116,22 +185,60 @@ public class UrlShortenerController {
                     methodOn(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class).redirectTo(
                             id, null)).toUri();
 
-//			RestTemplate restTemplate = new RestTemplate();
-//			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
+            int qrSize = 500;
+            int bgColour = 0xFFFFFF;
+            int fgColour = 0;
             if (correction == null) {
                 correction = "L";
             }
-            QrGenerator qrGenerator = new QrGenerator(150, 150, "UTF-8", correction.charAt(0), uri.toString(), vCardName, 0xFFFFFFF, 0);
-//            String qrApi = qrGenerator.getQrApi();
-            String qrApi = uri+"/qr";
-			String qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
-//            String qrDef = qrGenerator.getEncodedQr();
-//            String qrDef = qrGenerator.getEncodedLogoQr("http://www.gc.cuny.edu/shared/images/shared/LinkedIn_25px_25px.png");
+            if (qrPSize != null) {
+               try {
+                   qrSize = Integer.parseInt(qrPSize);
+               } catch (NumberFormatException e) {
+                   qrSize = 500;
+               }
+            }
+            if (bgPColour != null) {
+                try {
+                    bgColour = Integer.parseInt(bgPColour);
+            } catch (NumberFormatException e) {
+                bgColour = 0;
+            }
+            }
+            if (fgPColour != null) {
+                try {
+                    fgColour = Integer.parseInt(fgPColour);
+                } catch (NumberFormatException e) {
+                    fgColour = 16777215;
+                }
+            }
+
+
+            QrGenerator qrGenerator = new QrGenerator(qrSize, qrSize, "UTF-8", correction.charAt(0), uri.toString(), vCardName, bgColour, fgColour);
+            String qrApi;
+            String qrDef;
+            if (external == null) {
+                qrApi = qrGenerator.getQrApi();
+                qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
+            } else {
+                qrApi = qrGenerator.getGoogleQrApi();
+                RestTemplate restTemplate = new RestTemplate();
+			    qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
+            }
+
+            if (qrDef.length() > 29950) {
+                qrDef = "";
+            }
             ShortURL su = new ShortURL(id, url,
                     uri, sponsor, new Date(
                     System.currentTimeMillis()), owner,
-                    HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef);
-            return shortURLRepository.save(su);
+                    HttpStatus.TEMPORARY_REDIRECT.value(), true, ip, null, qrApi, qrDef, tiempo);
+
+            ShortURL shortURL = shortURLRepository.findByKey(id);
+            if (shortURL != null) {
+                shortURLRepository.update(su);
+                return su;
+            } else return shortURLRepository.save(su);
         } else {
             return null;
         }
