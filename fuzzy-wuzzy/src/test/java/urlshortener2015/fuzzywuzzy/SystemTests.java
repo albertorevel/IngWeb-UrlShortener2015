@@ -109,7 +109,7 @@ public class SystemTests {
 	}
 
 	@Test
-	public void testCreateQr() throws Exception {
+	public void testCreateOwnQr() throws Exception {
 		ResponseEntity<String> entity = postLink("http://example.com/");
 		assertThat(entity.getStatusCode(), is(HttpStatus.CREATED));
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
@@ -121,8 +121,22 @@ public class SystemTests {
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4/qr"));
 	}
 
-	public void testCreateVCardQrCode() throws Exception {
-		String[][] params = new String[][]{{"vCardName","Example page"}};
+	@Test
+	public void testCreateExternalQr() throws Exception {
+		String[][] params = new String[][]{{"external",""}};
+		ResponseEntity<String> entity = postLink("http://example.com/",params);
+		assertThat(entity.getStatusCode(), is(HttpStatus.CREATED));
+		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
+		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
+		ReadContext rc = JsonPath.parse(entity.getBody());
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
+		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?&cht=qr&chs=500x500&choeUTF-8&chld=L&chl=http%3A%2F%2Flocalhost%3A"+ this.port+"%2Ff684a3c4"));
+	}
+
+	public void testCreateVCardQrExternalCode() throws Exception {
+		String[][] params = new String[][]{{"external",""},{"vCardName","Example page"}};
 		ResponseEntity<String> entity = postLink("http://example.com/",params);
 		assertThat(entity.getStatusCode(), is(HttpStatus.CREATED));
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
@@ -135,7 +149,7 @@ public class SystemTests {
 	}
 
 	public void testCreateCorrectionQrCode() throws Exception {
-		String[][] params = new String[][]{{"correction","L"}};
+		String[][] params = new String[][]{{"external",""},{"correction","L"}};
 		ResponseEntity<String> entity = postLink("http://example.com/",params);
 		assertThat(entity.getStatusCode(), is(HttpStatus.CREATED));
 		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));

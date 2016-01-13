@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
@@ -150,10 +151,11 @@ public class UrlShortenerController {
 											  @RequestParam(value = "qrSize", required = false) String qrSize,
 											  @RequestParam(value = "fgColour", required = false) String fgCol,
 											  @RequestParam(value = "bgColour", required = false) String bgCol,
+											  @RequestParam(value = "external", required = false) String external,
                                               HttpServletRequest request) {
         logger.info("Requested new short for uri " + url);
         ShortURL su = createAndSaveIfValid(url, sponsor, brand, vCardName, correction, UUID
-                .randomUUID().toString(), extractIP(request), logo, tiempo, qrSize, fgCol, bgCol);
+                .randomUUID().toString(), extractIP(request), logo, tiempo, qrSize, fgCol, bgCol, external);
         if (su != null) {
             HttpHeaders h = new HttpHeaders();
             h.setLocation(su.getUri());
@@ -173,7 +175,7 @@ public class UrlShortenerController {
     protected ShortURL createAndSaveIfValid(String url, String sponsor,
                                             String brand, String vCardName, String correction,
                                             String owner, String ip, String logo, String tiempo,
-                                            String qrPSize, String fgPColour, String bgPColour) {
+                                            String qrPSize, String fgPColour, String bgPColour, String external) {
         UrlValidator urlValidator = new UrlValidator(new String[]{"http",
                 "https"});
         if (urlValidator.isValid(url)) {
@@ -182,11 +184,6 @@ public class UrlShortenerController {
             URI uri = linkTo(
                     methodOn(urlshortener2015.fuzzywuzzy.web.UrlShortenerController.class).redirectTo(
                             id, null)).toUri();
-
-            //If we dont generate qr with our generator
-//			RestTemplate restTemplate = new RestTemplate();
-//			String qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
-
 
             int qrSize = 500;
             int bgColour = 0xFFFFFF;
@@ -205,25 +202,33 @@ public class UrlShortenerController {
                 try {
                     bgColour = Integer.parseInt(bgPColour);
             } catch (NumberFormatException e) {
-                bgColour = 500;
+                bgColour = 0;
             }
             }
             if (fgPColour != null) {
                 try {
                     fgColour = Integer.parseInt(fgPColour);
                 } catch (NumberFormatException e) {
-                    fgColour = 500;
+                    fgColour = 16777215;
                 }
             }
 
 
             QrGenerator qrGenerator = new QrGenerator(qrSize, qrSize, "UTF-8", correction.charAt(0), uri.toString(), vCardName, bgColour, fgColour);
-            String qrApi = qrGenerator.getQrApi();
-            //TODO google option
-//            String qrApi = qrGenerator.getGoogleQrApi();
-//             String qrDef = qrGenerator.getEncodedQr();
-			String qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
+            String qrApi;
+            String qrDef;
+            if (external == null) {
+                qrApi = qrGenerator.getQrApi();
+                qrDef = (logo != null ? qrGenerator.getEncodedLogoQr(logo) : qrGenerator.getEncodedQr());
+            } else {
+                qrApi = qrGenerator.getGoogleQrApi();
+                RestTemplate restTemplate = new RestTemplate();
+			    qrDef = encodeBase64String(restTemplate.getForObject(qrApi, byte[].class));
+            }
 
+            if (qrDef.length() > 29950) {
+                qrDef = "";
+            }
             ShortURL su = new ShortURL(id, url,
                     uri, sponsor, new Date(
                     System.currentTimeMillis()), owner,
