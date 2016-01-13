@@ -85,7 +85,7 @@ public class UrlShortenerController {
 		if (l != null) {
 			createAndSaveClick(id, extractIP(request));
 			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
-			if(l.getTiempo()!= null){
+			if(!l.getTiempo().equals("")){
                 int tiempoS = Integer.parseInt(l.getTiempo());
                 int tiempo = tiempoS*1000;
 				String body = "<!doctype html>\n" +
