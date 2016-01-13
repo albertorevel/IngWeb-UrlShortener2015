@@ -87,44 +87,49 @@ public class UrlShortenerController {
 		if (l != null) {
 			createAndSaveClick(id, extractIP(request));
 			ResponseEntity<?> re = createSuccessfulRedirectToResponse(l);
-			if(l.getTiempo()!= null){
+			if(l.getTiempo()!=null && !l.getTiempo().equals("")){
                 int tiempoS = Integer.parseInt(l.getTiempo());
-                int tiempo = tiempoS*1000;
-				String body = "<!doctype html>\n" +
-						"<head>\n" +
-						"<script type=\"text/javascript\">\n" +
-						"function redireccionar(){\n" +
-						"location.href=\"final/" + id +"\"\n" +
-						"}\n" +
-						"setTimeout (\"redireccionar()\"," + tiempo +");\n" +
-						"</script>\n" +
-						"</head>\n" +
-						"<body>\n" +
-                        "<div class= \"row\">\n" +
-                        "<div align=\"center\">\n" +
-                        "<h1> Pagina de publicidad </h1>\n" +
-                        "<script type=\"text/javascript\">\n" +
-                        "var segundos = "+ tiempoS +";\n" +
-                        "function contar(){\n" +
-                        "if(segundos <= 0){\n" +
-                        "document.getElementById(\"contador\").innerHTML = \"Redireccionando ...\";\n" +
-                        "} else {\n" +
-                        "segundos--;\n" +
-                        "document.getElementById(\"contador\").innerHTML = \"Le redireccionaremos automáticamente en \" + segundos  + \" segundos.\";\n" +
-                        "}\n" +
-                        "}\n" +
-                        "setInterval(\"contar()\",1000);\n" +
-                        "</script>\n" +
-                        "<div id=\"contador\">Le redireccionaremos automáticamente en "+tiempoS+" segundos</div>\n" +
-                        "<center>\n" +
-                        "<img src=\"http://www.tiempodepublicidad.com/wp-content/themes/gridthemeresponsiveFull/images/tdp/tiempo-de-publicidad.png\" alt=\"Publicidad\">" +
-                        "</center>\n" +
-                        "</div>\n" +
-						"</body>\n" +
-						"</html>";
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.setContentType(MediaType.TEXT_HTML);
-				return new ResponseEntity<Object>(body,responseHeaders,HttpStatus.OK);
+                if(tiempoS > 0) {
+                    int tiempo = tiempoS * 1000;
+                    String body = "<!doctype html>\n" +
+                            "<head>\n" +
+                            "<script type=\"text/javascript\">\n" +
+                            "function redireccionar(){\n" +
+                            "location.href=\"final/" + id + "\"\n" +
+                            "}\n" +
+                            "setTimeout (\"redireccionar()\"," + tiempo + ");\n" +
+                            "</script>\n" +
+                            "</head>\n" +
+                            "<body>\n" +
+                            "<div class= \"row\">\n" +
+                            "<div align=\"center\">\n" +
+                            "<h1> Pagina de publicidad </h1>\n" +
+                            "<script type=\"text/javascript\">\n" +
+                            "var segundos = " + tiempoS + ";\n" +
+                            "function contar(){\n" +
+                            "if(segundos <= 0){\n" +
+                            "document.getElementById(\"contador\").innerHTML = \"Redireccionando ...\";\n" +
+                            "} else {\n" +
+                            "segundos--;\n" +
+                            "document.getElementById(\"contador\").innerHTML = \"Le redireccionaremos automáticamente en \" + segundos  + \" segundos.\";\n" +
+                            "}\n" +
+                            "}\n" +
+                            "setInterval(\"contar()\",1000);\n" +
+                            "</script>\n" +
+                            "<div id=\"contador\">Le redireccionaremos automáticamente en " + tiempoS + " segundos</div>\n" +
+                            "<center>\n" +
+                            "<img src=\"http://www.tiempodepublicidad.com/wp-content/themes/gridthemeresponsiveFull/images/tdp/tiempo-de-publicidad.png\" alt=\"Publicidad\">" +
+                            "</center>\n" +
+                            "</div>\n" +
+                            "</body>\n" +
+                            "</html>";
+                    HttpHeaders responseHeaders = new HttpHeaders();
+                    responseHeaders.setContentType(MediaType.TEXT_HTML);
+                    return new ResponseEntity<Object>(body, responseHeaders, HttpStatus.OK);
+                }
+                else{
+                    return re;
+                }
 			}
 			else {
 				return re;
