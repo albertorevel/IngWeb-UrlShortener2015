@@ -134,7 +134,7 @@ public class SystemTests {
 		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?&cht=qr&chs=500x500&choeUTF-8&chld=L&chl=http%3A%2F%2Flocalhost%3A"+ this.port+"%2Ff684a3c4"));
 	}
-
+    
 	public void testCreateVCardQrExternalCode() throws Exception {
 		String[][] params = new String[][]{{"external",""},{"vCardName","Example page"}};
 		ResponseEntity<String> entity = postLink("http://example.com/",params);
@@ -159,6 +159,72 @@ public class SystemTests {
 		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
 		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.qrApi"), Matchers.<Object>is("https://chart.googleapis.com/chart?chs=150x150&cht=qr&choe=UTF-8&chl=http://localhost:" + this.port + "/f684a3c4&chld=L"));
+	}
+	@Test
+	public void testPonertiempo() throws Exception {
+		String[][] params = new String[][]{{"tiempo","5"}};
+		ResponseEntity<String> entity = postLink("http://example.com/",params);
+		assertThat(entity.getStatusCode(), is(HttpStatus.CREATED));
+		assertThat(entity.getHeaders().getLocation(), is(new URI("http://localhost:"+ this.port+"/f684a3c4")));
+		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
+		ReadContext rc = JsonPath.parse(entity.getBody());
+		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
+		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
+		assertThat(rc.read("$.tiempo"), Matchers.<Object>is("5"));
+	}
+
+	@Test
+	public void testPubliRedirection() throws Exception {
+		String[][] params = new String[][]{{"tiempo","5"}};
+		postLink("http://example.com/",params);
+		ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
+				"http://localhost:" + this.port
+						+ "/f684a3c4", String.class);
+		assertThat(entity.getStatusCode(), is(HttpStatus.OK));
+		assertThat(entity.getHeaders().getContentType(), Matchers.<MediaType>is(MediaType.valueOf("text/html;charset=UTF-8")));
+		assertThat(entity.getBody(), Matchers.is("<!doctype html>\n" +
+				"<head>\n" +
+				"<script type=\"text/javascript\">\n" +
+				"function redireccionar(){\n" +
+				"location.href=\"final/f684a3c4\"\n" +
+				"}\n" +
+				"setTimeout (\"redireccionar()\",5000);\n" +
+				"</script>\n" +
+				"</head>\n" +
+				"<body>\n" +
+				"<div class= \"row\">\n" +
+				"<div align=\"center\">\n" +
+				"<h1> Pagina de publicidad </h1>\n" +
+				"<script type=\"text/javascript\">\n" +
+				"var segundos = 5;\n" +
+				"function contar(){\n" +
+				"if(segundos <= 0){\n" +
+				"document.getElementById(\"contador\").innerHTML = \"Redireccionando ...\";\n" +
+				"} else {\n" +
+				"segundos--;\n" +
+				"document.getElementById(\"contador\").innerHTML = \"Le redireccionaremos automáticamente en \" + segundos  + \" segundos.\";\n" +
+				"}\n" +
+				"}\n" +
+				"setInterval(\"contar()\",1000);\n" +
+				"</script>\n" +
+				"<div id=\"contador\">Le redireccionaremos automáticamente en 5 segundos</div>\n" +
+				"<center>\n" +
+				"<img src=\"http://www.tiempodepublicidad.com/wp-content/themes/gridthemeresponsiveFull/images/tdp/tiempo-de-publicidad.png\" alt=\"Publicidad\"></center>\n" +
+				"</div>\n" +
+				"</body>\n" +
+				"</html>"));
+	}
+	@Test
+	public void redireccionTarget() throws Exception {
+		String[][] params = new String[][]{{"tiempo","5"}};
+		ResponseEntity<String> entity = postLink("http://example.com/",params);
+		assertThat(entity.getStatusCode(), is(HttpStatus.CREATED));
+		ResponseEntity<String> entityRedirect = new TestRestTemplate().getForEntity(
+				"http://localhost:" + this.port
+						+ "/final/f684a3c4", String.class);
+		assertThat(entityRedirect.getStatusCode(), is(HttpStatus.TEMPORARY_REDIRECT));
+		assertThat(entityRedirect.getHeaders().getLocation(), Matchers.<URI>is(URI.create("http://example.com/")));
 	}
 }
 
