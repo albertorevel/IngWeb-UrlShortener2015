@@ -33,6 +33,6 @@ CREATE TABLE CLICK(
 	COUNTRY		VARCHAR(50),					-- Country
 	COMUNITY  VARCHAR(50),         --Comunity
 	CITY		VARCHAR(50),				--City
-	LATITUD		VARCHAR(30),				--Latitud
-	LONGITUD	VARCHAR(30)					--Longitud
+	LATITUD		DOUBLE,				--Latitud
+	LONGITUD	DOUBLE					--Longitud
 )

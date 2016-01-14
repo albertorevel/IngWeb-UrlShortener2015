@@ -24,6 +24,11 @@ public class ShortURLFixture {
 				null, null, null, null, null);
 	}
 
+	public static ShortURL url4() {
+		return new ShortURL("4", "http://www.zanganoo.es/", null, null, null, null, null, false,
+				null, null, null, null, null);
+	}
+
 	public static ShortURL badUrl() {
 		return new ShortURL(null, null, null, null, null, null, null, false,
 				null, null, null, null, null);

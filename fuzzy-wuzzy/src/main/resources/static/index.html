@@ -12,7 +12,7 @@
 </script>
 <script type="text/javascript" src="https://maps.google.com/maps/api/js?sensor=false"></script>
 </head>
-<body onload="initMap()">
+<body>
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-12 text-center">
@@ -47,6 +47,26 @@
 							<label>
 								<input type="radio" class="center-block form-control input-lg" name="group" value="city"> City
 							</label>
+						</div>
+						<div class="input-group input-group-lg col-sm-12">
+							<div class="input-group input-group-lg col-sm-6">
+								Desde
+								<input type="text" class="center-block form-control input-lg"
+									   title="Dia" placeholder="Dia(DD)" name="daySince">
+								<input type="text" class="center-block form-control input-lg"
+									   title="Mes-" placeholder="Mes(MM)" name="monthSince">
+								<input type="text" class="center-block form-control input-lg"
+									   title="Año" placeholder="Año(AAAA)" name="yearSince">
+							</div>
+							<div class="input-group input-group-lg col-sm-6">
+								Hasta
+								<input type="text" class="center-block form-control input-lg"
+									   title="Dia" placeholder="Dia(DD)" name="dayUntil">
+								<input type="text" class="center-block form-control input-lg"
+									   title="Mes-" placeholder="Mes(MM)" name="monthUntil">
+								<input type="text" class="center-block form-control input-lg"
+									   title="Año" placeholder="Año(AAAA)" name="yearUntil">
+							</div>
 						</div>
 					</form>
 				</div>

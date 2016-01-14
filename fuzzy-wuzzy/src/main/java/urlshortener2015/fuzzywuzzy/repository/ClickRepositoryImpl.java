@@ -1,9 +1,5 @@
 package urlshortener2015.fuzzywuzzy.repository;
 
-import java.nio.charset.StandardCharsets;
-import java.sql.*;
-import java.util.List;
-
 import com.google.common.hash.Hashing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +12,12 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-
 import urlshortener2015.fuzzywuzzy.domain.Click;
 import urlshortener2015.fuzzywuzzy.domain.ClickAgr;
+
+import java.nio.charset.StandardCharsets;
+import java.sql.*;
+import java.util.List;
 
 
 @Repository
@@ -34,7 +33,7 @@ public class ClickRepositoryImpl implements ClickRepository {
 					rs.getDate("created"), rs.getString("referrer"),
 					rs.getString("browser"), rs.getString("platform"),
 					rs.getString("ip"), rs.getString("country"),rs.getString("comunity"),
-					rs.getString("city"),rs.getString("latitud"),rs.getString("longitud"));
+					rs.getString("city"),rs.getDouble("latitud"),rs.getDouble("longitud"));
 		}
 	};
 
@@ -120,8 +119,8 @@ public class ClickRepositoryImpl implements ClickRepository {
 					ps.setString(8, cl.getCountry());
 					ps.setString(9, cl.getComunity());
 					ps.setString(10, cl.getCity());
-					ps.setString(11, cl.getLatitud());
-					ps.setString(12, cl.getLongitud());
+					ps.setDouble(11, cl.getLatitud());
+					ps.setDouble(12, cl.getLongitud());
 					return ps;
 				}
 			}, holder);
@@ -241,6 +240,50 @@ public class ClickRepositoryImpl implements ClickRepository {
 	}
 
 	/**
+	 * Método que devuelve toda la información agregada respecto a un area.
+	 * @param er patron
+	 * @param group grupo por el que agrupar
+	 * @param latitudSince
+	 * @param latitudUntil
+	 * @param longitudSince
+	 * @param longitudUntil
+     * @return
+     */
+	@Override
+	public List<ClickAgr> findByGroupArea(String er,String group,double latitudSince, double latitudUntil,
+										  double longitudSince, double longitudUntil) {
+		try {
+			String concatenate = "%"+er+"%";
+			if(group.equals("city")){
+				return jdbc.query("SELECT country, comunity, city, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+					"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ? AND " +
+					"c.latitud >= ? AND c.latitud <= ? AND c.longitud >= ? AND c.longitud <= ?) " +
+					"GROUP BY country, comunity, city, target ORDER BY target, country, comunity, city",
+					new Object[]{concatenate, latitudSince, latitudUntil, longitudSince, longitudUntil},rowMapperGroupCity);
+
+			}
+			else if(group.equals("comunity")){
+				return jdbc.query("SELECT country, comunity, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target, " +
+					"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ? AND " +
+					"c.latitud >= ? AND c.latitud <= ? AND c.longitud >= ? AND c.longitud <= ?) " +
+					"GROUP BY country, comunity, target ORDER BY target, country, comunity",
+					new Object[]{concatenate, latitudSince, latitudUntil, longitudSince, longitudUntil},rowMapperGroupComunity);
+			}
+			else{
+				return jdbc.query("SELECT country, target, count(*) FROM (SELECT c.country, c.comunity, c.city, s.target," +
+					"c.created FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ? AND " +
+					"c.latitud >= ? AND c.latitud <= ? AND c.longitud >= ? AND c.longitud <= ?) " +
+					"GROUP BY country, target ORDER BY target, country",
+					new Object[]{concatenate,latitudSince, latitudUntil, longitudSince, longitudUntil},rowMapperGroupCountry);
+			}
+
+		} catch (Exception e) {
+			log.debug("When select for regurlar expresion " + er, e);
+			return null;
+		}
+	}
+
+	/**
 	 * Método que devuelve la información agregada desde una fecha
 	 * @param er patrón
 	 * @param group indica sobre qué parametro se agrega la información (country, comunity o city)
@@ -304,7 +347,7 @@ public class ClickRepositoryImpl implements ClickRepository {
 			}
 
 		} catch (Exception e) {
-			log.debug("When select for regurlar expresion " + er, e);
+			log.debug("When select for regurlar expresion with group and date(until)" + er, e);
 			return null;
 		}
 	}
@@ -347,7 +390,10 @@ public class ClickRepositoryImpl implements ClickRepository {
 		}
 	}
 
-
+	/**
+	 * Método que devuelve todos "clicks" de la base de datos.
+	 * @return List<Click>
+     */
 	public List<Click> getAll() {
 		try {
 			return jdbc.query("SELECT * FROM Click", rowMapper);
@@ -356,78 +402,197 @@ public class ClickRepositoryImpl implements ClickRepository {
 			return null;
 		}
 	}
-	private void meterDatos() {
+
+	/**
+	 * Método que devuelve todos "clicks" que pertenecen a url que coinciden con el patrón.
+	 * @param er
+	 * @return
+     */
+	@Override
+	public List<Click> getCoordenatesForGroup(String er) {
+		try {
+			String concatenate = "%"+er+"%";
+			return jdbc.query("SELECT id, hash, created, referrer, browser, platform, ip, country, comunity, city, latitud, longitud" +
+							" FROM (SELECT c.id, c.hash, c.created, c.referrer, c.browser, c.platform, c.ip, c.country, c.comunity, " +
+							"c.city, c.latitud, c.longitud, s.target FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?)",
+					new Object[]{concatenate},rowMapper);
+		} catch (Exception e) {
+			log.debug("When select for regurlar expresion with area" + er, e);
+			return null;
+		}
+	}
+
+	/**
+	 * Método que obtiene los "Clicks" de la base de datos que pertenen a direcciones que coinciden con el patrón y
+	 * estan en un area concreto.
+	 * @param er patrón
+	 * @param latitudSince
+	 * @param latitudUntil
+	 * @param longitudSince
+	 * @param longitudUntil
+	 * @return List<Click>
+	 */
+	@Override
+	public List<Click> getByArea(String er,double latitudSince, double latitudUntil, double longitudSince, double longitudUntil) {
+		try {
+			String concatenate = "%"+er+"%";
+			return jdbc.query("SELECT id, hash, created, referrer, browser, platform, ip, country, comunity, city, latitud, longitud" +
+							" FROM (SELECT c.id, c.hash, c.created, c.referrer, c.browser, c.platform, c.ip, c.country, c.comunity, " +
+							"c.city, c.latitud, c.longitud, s.target FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) "+
+							"WHERE latitud >= ? AND latitud <= ? AND longitud >= ? AND longitud <= ?",
+					new Object[]{concatenate, latitudSince, latitudUntil, longitudSince, longitudUntil},rowMapper);
+
+
+		} catch (Exception e) {
+			log.debug("When select for regurlar expresion with area" + er, e);
+			return null;
+		}
+	}
+
+	/**
+	 * Método que obtiene los "Clicks" de la base de datos que pertenen a direcciones que coinciden con el patrón y
+	 * estan en un area concreto y se realizaron despues de una fecha determinada.
+	 * @param er patrón
+	 * @param since
+	 * @return List<Click>
+	 */
+	@Override
+	public List<Click> getCoordenatesSince(String er, Date since) {
+		try {
+			String concatenate = "%"+er+"%";
+			return jdbc.query("SELECT id, hash, created, referrer, browser, platform, ip, country, comunity, city, latitud, longitud" +
+							" FROM (SELECT c.id, c.hash, c.created, c.referrer, c.browser, c.platform, c.ip, c.country, c.comunity, " +
+							"c.city, c.latitud, c.longitud, s.target FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) " +
+							"WHERE created >= ?",
+					new Object[]{concatenate, since},rowMapper);
+
+
+		} catch (Exception e) {
+			log.debug("When select for regurlar expresion with area" + er, e);
+			return null;
+		}
+	}
+
+	/**
+	 * Método que obtiene los "Clicks" de la base de datos que pertenen a direcciones que coinciden con el patrón y
+	 * estan en un area concreto y se realizaron antes de una fecha determinada.
+	 * @param er patrón
+	 * @param until
+	 * @return List<Click>
+	 */
+	@Override
+	public List<Click> getCoordenatesUntil(String er,Date until) {
+		try {
+			String concatenate = "%"+er+"%";
+
+			return jdbc.query("SELECT id, hash, created, referrer, browser, platform, ip, country, comunity, city, latitud, longitud" +
+							" FROM (SELECT c.id, c.hash, c.created, c.referrer, c.browser, c.platform, c.ip, c.country, c.comunity, " +
+							"c.city, c.latitud, c.longitud, s.target FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) " +
+							"WHERE created <= ?",
+					new Object[]{concatenate, until},rowMapper);
+		} catch (Exception e) {
+			log.debug("When select for regurlar expresion with area" + er, e);
+			return null;
+		}
+	}
+
+	/**
+	 * Método que obtiene los "Clicks" de la base de datos que pertenen a direcciones que coinciden con el patrón y
+	 * estan en un area concreto y se realizaron durante un periodo de tiempo acotado.
+	 * @param er patrón
+	 * @param since
+     * @param until
+     * @return List<Click>
+     */
+	@Override
+	public List<Click> getCoordenatesBounded(String er,Date since, Date until) {
+		try {
+			String concatenate = "%"+er+"%";
+
+			return jdbc.query("SELECT id, hash, created, referrer, browser, platform, ip, country, comunity, city, latitud, longitud" +
+							" FROM (SELECT c.id, c.hash, c.created, c.referrer, c.browser, c.platform, c.ip, c.country, c.comunity, " +
+							"c.city, c.latitud, c.longitud, s.target FROM click c, shorturl s WHERE c.hash=s.hash AND target LIKE ?) " +
+							"WHERE created >= ? AND created <= ?",
+					new Object[]{concatenate, since, until},rowMapper);
+		} catch (Exception e) {
+			log.debug("When select for regurlar expresion with area: " + er, e);
+			return null;
+		}
+	}
+
+
+	public void meterDatos() {
 		String url = "http://www.unizar.es/";
 		String id = Hashing.murmur3_32()
 				.hashString(url, StandardCharsets.UTF_8).toString();
 		Click data = new Click(null, id, new Date(2015,10,2),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", "41.64886959999999", "-0.889742100000035");
+				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", 41.64886959999999, -0.889742100000035);
 		save(data);
 		data = new Click(null, id, new Date(2015,5,13),
-				null, null, null, "74.125.45.100", "United States", "New York", "New York", "37.09024", "-95.71289100000001");
+				null, null, null, "74.125.45.102", "United States", "New York", "New York", 37.09024, -92.71289100000001);
 		save(data);
 		data = new Click(null, id, new Date(2015,9,3),
-				null, null, null, "74.125.45.100", "Marruecos", "Tanger", "MarruecosCity", "31.791702", "-7.092620000000011");
+				null, null, null, "74.125.45.100", "Marruecos", "Tanger", "MarruecosCity", 31.791702, -7.092620000000011);
 		save(data);
 		data = new Click(null, id, new Date(2015,2,5),
-				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", "40.4167754", "-3.7037901999999576");
+				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", 40.4167754, -3.7037901999999576);
 		save(data);
 		data = new Click(null, id, new Date(2015,11,4),
-				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "39.09024", "-96.71289100000001");
+				null, null, null, "74.125.45.107", "United States", "California", "Mountain View", 37.09024, -97.71289100000001);
 		save(data);
 		data = new Click(null, id, new Date(2015,1,1),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "40.64886959999999", "-0.889742100000035");
+				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", 40.64886959999999, -0.889742100000035);
 		save(data);
 		data = new Click(null, id, new Date(2014,12,17),
-				null, null, null, "74.125.45.100", "Marruecos", "Gran Casablanca", "Marruecolandia", "31.791702", "-6.092620000000011");
+				null, null, null, "74.125.45.100", "Marruecos", "Gran Casablanca", "Marruecolandia", 31.791702, -6.092620000000011);
 		save(data);
 		url = "http://www.google.es/";
 		id = Hashing.murmur3_32()
 				.hashString(url, StandardCharsets.UTF_8).toString();
 		data = new Click(null, id, new Date(2015,10,2),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", "41.64886959999999", "-0.889742100000035");
+				null, null, null, "74.125.45.100", "España", "Aragón", "Zaragoza", 41.64886959999999, -0.889742100000035);
 		save(data);
-		data = new Click(null, id, new Date(2015,5,13),
-				null, null, null, "74.125.45.100", "United States", "New York", "New York", "37.09024", "-95.71289100000001");
+		data = new Click(null, id, new Date(2014,5,13),
+				null, null, null, "74.125.45.108", "United States", "New York", "New York", 37.09024, -98.71289100000001);
 		save(data);
 		data = new Click(null, id, new Date(2015,9,3),
-				null, null, null, "74.125.45.100", "Marruecos", "Tanger", "MarruecosCity", "32.791702", "-7.092620000000011");
+				null, null, null, "74.125.45.100", "Marruecos", "Tanger", "Khourigba", 32.79170, -7.092620000000011);
 		save(data);
 		data = new Click(null, id, new Date(2015,2,5),
-				null, null, null, "74.125.45.100", "España", "Madrid", "Huesca", "40.4167754", "-3.7037901999999576");
+				null, null, null, "74.125.45.100", "España", "Aragon", "Huesca", 42.131845, -0.40780580000000555);
 		save(data);
 		data = new Click(null, id, new Date(2014,11,4),
-				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "39.09024", "-96.71289100000001");
+				null, null, null, "74.125.45.106", "United States", "California", "Mountain View", 38.09024, -96.71289100000001);
 		save(data);
 		data = new Click(null, id, new Date(2015,1,1),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "40.64886959999999", "-0.889742100000035");
+				null, null, null, "74.125.45.100", "España", "Aragon", "Teruel", 40.3456879, -1.1064344999999776);
 		save(data);
 		data = new Click(null, id, new Date(2014,12,17),
-				null, null, null, "74.125.45.100", "Marruecos", "Gran Casablanca", "MarruecosCity", "31.791702", "-6.092620000000011");
+				null, null, null, "74.125.45.100", "Marruecos", "Gran Casablanca", "MarruecosCity", 39.791702, -6.092620000000011);
 		save(data);
 		url = "http://www.ozanganoo.es/";
 		id = Hashing.murmur3_32()
 				.hashString(url, StandardCharsets.UTF_8).toString();
 		data = new Click(null, id, new Date(2014,10,2),
-				null, null, null, "74.125.45.100", "China", "Yong", "Yang", "37.406", "-122.079");
+				null, null, null, "74.125.45.100", "China", "Yong", "Yang", 37.406, -122.079);
 		save(data);
 		data = new Click(null, id, new Date(2015,5,13),
-				null, null, null, "74.125.45.100", "United States", "California", "California", "37.09024", "-95.712891");
+				null, null, null, "74.125.45.105", "United States", "California", "California", 37.09024, -95.712891);
 		save(data);
 		data = new Click(null, id, new Date(2014,9,3),
-				null, null, null, "74.125.45.100", "Marruecos", "Califan", "MarruecosCity", "32.791702", "-8.0926200");
+				null, null, null, "74.125.45.100", "Marruecos", "Califan", "MarruecosCity", 33.791702, -8.0926200);
 		save(data);
 		data = new Click(null, id, new Date(2015,2,5),
-				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", "40.4167754", "-3.7037901");
+				null, null, null, "74.125.45.100", "España", "Madrid", "Getafe", 45.4167754, -3.7037901);
 		save(data);
 		data = new Click(null, id, new Date(2015,11,4),
-				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", "35.861660", "104.195396");
+				null, null, null, "74.125.45.100", "United States", "California", "Mountain View", 35.861660, 104.195396);
 		save(data);
 		data = new Click(null, id, new Date(2015,1,1),
-				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", "40.6488695", "-0.8897421");
+				null, null, null, "74.125.45.100", "España", "Aragón", "Teruel", 40.6488695, -0.8897421);
 		save(data);
 		data = new Click(null, id, new Date(2014,12,17),
-				null, null, null, "74.125.45.100", "Marruecos", "Maroco", "Moroco", "31.001702", "-7.092620000000011");
+				null, null, null, "74.125.45.100", "Marruecos", "Maroco", "Moroco", 31.001702, -7.092620000000011);
 		save(data);
 	}
 }

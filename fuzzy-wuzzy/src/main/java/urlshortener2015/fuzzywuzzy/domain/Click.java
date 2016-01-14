@@ -14,12 +14,12 @@ public class Click{
 	private String country;
 	private String comunity;
 	private String city;
-	private String latitud;
-	private String longitud;
+	private double latitud;
+	private double longitud;
 
 	public Click(Long id, String hash, Date created, String referrer,
 				 String browser, String platform, String ip, String country,
-				 String comunity, String city, String latitud, String longitud) {
+				 String comunity, String city, double latitud, double longitud) {
 		this.id = id;
 		this.hash = hash;
 		this.created = created;
@@ -74,11 +74,11 @@ public class Click{
 
 	public void setCity(String city) {this.city = city;}
 
-	public String getLatitud() {return latitud;}
+	public double getLatitud() {return latitud;}
 
-	public void setLatitud(String latitud) {this.latitud = latitud;}
+	public void setLatitud(double latitud) {this.latitud = latitud;}
 
-	public String getLongitud() {return longitud;}
+	public double getLongitud() {return longitud;}
 
-	public void setLongitud(String longitud) {this.longitud = longitud;}
+	public void setLongitud(double longitud) {this.longitud = longitud;}
 }
