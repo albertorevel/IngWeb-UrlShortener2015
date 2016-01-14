@@ -65,7 +65,7 @@ public class SystemTests {
 		assertThat(entity.getHeaders().getContentType(), is(new MediaType("application", "json", Charset.forName("UTF-8"))));
 		ReadContext rc = JsonPath.parse(entity.getBody());
 		assertThat(rc.read("$.hash"), Matchers.<Object>is("f684a3c4"));
-		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:" + this.port + "/f684a3c4"));
+		assertThat(rc.read("$.uri"), Matchers.<Object>is("http://localhost:"+ this.port+"/f684a3c4"));
 		assertThat(rc.read("$.target"), Matchers.<Object>is("http://example.com/"));
 		assertThat(rc.read("$.sponsor"), is(nullValue()));
 	

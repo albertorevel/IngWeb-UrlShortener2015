@@ -1,22 +1,24 @@
 package urlshortener2015.fuzzywuzzy.repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-
+import com.google.common.hash.Hashing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
-import urlshortener2015.fuzzywuzzy.repository.ShortURLRepository;
+
+import java.nio.charset.StandardCharsets;
+import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
 @Repository
 public class ShortURLRepositoryImpl implements ShortURLRepository {
@@ -44,6 +46,7 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
 
     public ShortURLRepositoryImpl(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
+        meterDatos();
     }
 
     @Override
@@ -143,5 +146,34 @@ public class ShortURLRepositoryImpl implements ShortURLRepository {
             log.debug("When select for target " + target, e);
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public void meterDatos() {
+        //INTRODUCIMOS DATOS DE PRUEBA
+        String url = "http://www.unizar.es/";
+        String id = Hashing.murmur3_32()
+                .hashString(url, StandardCharsets.UTF_8).toString();
+        ShortURL su = new ShortURL(id, url,
+                null, null, new Date(
+                System.currentTimeMillis()), null,
+                HttpStatus.TEMPORARY_REDIRECT.value(), true, "::::1", null, null, null,null);
+        save(su);
+        url = "http://www.google.es/";
+        id = Hashing.murmur3_32()
+                .hashString(url, StandardCharsets.UTF_8).toString();
+        su = new ShortURL(id, url,
+                null, null, new Date(
+                System.currentTimeMillis()), null,
+                HttpStatus.TEMPORARY_REDIRECT.value(), true, "::::1", null, null, null,null);
+        save(su);
+        url = "http://www.ozanganoo.es/";
+        id = Hashing.murmur3_32()
+                .hashString(url, StandardCharsets.UTF_8).toString();
+        su = new ShortURL(id, url,
+                null, null, new Date(
+                System.currentTimeMillis()), null,
+                HttpStatus.TEMPORARY_REDIRECT.value(), true, "::::1", null, null, null,null);
+        save(su);
     }
 }

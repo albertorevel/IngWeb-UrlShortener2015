@@ -1,12 +1,15 @@
-package urlshortener2015.fuzzywuzzy.repository.fixture;
+package urlshortener2015.fuzzywuzzy.fixture;
 
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
+
+
+import java.sql.Date;
 
 public class ShortURLFixture {
 
 	public static ShortURL url1() {
 		return new ShortURL("1", "http://www.unizar.es/", null, null, null, null, null, false,
-				null, null, null, null, null);
+				null, null, null, null,null);
 	}
 
 	public static ShortURL url1modified() {
