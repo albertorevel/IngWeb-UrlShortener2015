@@ -19,15 +19,6 @@ import java.util.Map;
 
 import static org.apache.tomcat.util.codec.binary.Base64.encodeBase64String;
 
-/**
- * Created by Alberto on 16/12/2015.
- */
-
-// tamaño = chs
-// correction = chld
-// content = chl
-//encoding = choe
-
 public class QrGenerator {
     private enum correction {
         L,
@@ -67,7 +58,7 @@ public class QrGenerator {
         this.ySize = ySize;
         this.encoding = encoding;
         this.uri = uri;
-        this.correctionLevel = getCorrection();
+        this.correctionLevel = getCorrection(correctionLevel);
         setContent();
     }
 
@@ -84,7 +75,7 @@ public class QrGenerator {
         this.xSize = xSize;
         this.ySize = ySize;
         this.encoding = encoding;
-        this.correctionLevel = getCorrection();
+        this.correctionLevel = getCorrection(correctionLevel);
         this.uri = uri;
         this.vCardName = vCardName;
         setContent();
@@ -107,7 +98,7 @@ public class QrGenerator {
         this.uri = uri;
         this.backGroundColor = backGroundColor;
         this.foreGroundColor = foreGroundColor;
-        this.correctionLevel = getCorrection();
+        this.correctionLevel = getCorrection(correctionLevel);
         setContent();
     }
 
@@ -138,7 +129,7 @@ public class QrGenerator {
         this.xSize = xSize;
         this.ySize = ySize;
         this.encoding = encoding;
-        this.correctionLevel = getCorrection();
+        this.correctionLevel = getCorrection(correctionLevel);
         this.uri = uri;
         this.vCardName = vCardName;
         this.backGroundColor = backGroundColor;
@@ -149,7 +140,7 @@ public class QrGenerator {
     /**
      * @return an Google Charts Api query to create a QR with specified information
      */
-    public String getQrApi() {
+    public String getGoogleQrApi() {
         String api = googleApiBase;             // Api base
         api += "&chs=" + xSize + "x" + ySize;   // Qr size
         api += "&choe" + encoding;              // Qr encoding
@@ -160,8 +151,12 @@ public class QrGenerator {
         return api;
     }
 
+    public String getQrApi() {
+
+        return uri + "/qr";
+    }
     /**
-     * It creates teh Qr code
+     * It creates the Qr code
      *
      * @return the Qr code encoded in Base64
      */
@@ -227,13 +222,13 @@ public class QrGenerator {
     /**
      *
      */
-    private correction getCorrection() {
+    private correction getCorrection(char correctionLevel) {
         switch (correctionLevel) {
-            case M:
+            case 'M':
                 return correction.M;
-            case Q:
+            case 'Q':
                 return correction.Q;
-            case H:
+            case 'H':
                 return correction.H;
             default:
                 return correction.L;
@@ -317,7 +312,9 @@ public class QrGenerator {
             return getEncodedQr();
         }
 
-        if(logoImage.getHeight() > 30 || logoImage.getWidth() > 30) {
+        if(!isValidLogo(codeImage, logoImage)
+//                logoImage.getHeight() > 30 || logoImage.getWidth() > 30
+        ) {
             return getEncodedQr();
         }
 
@@ -346,6 +343,35 @@ public class QrGenerator {
         }
 
         return encodeBase64String(byteArray);
+    }
+
+    private boolean isValidLogo(BufferedImage code, BufferedImage logo) {
+        double limit = 0;
+        switch (correctionLevel) {
+            case H:
+                limit = 0.3;
+                break;
+            case Q:
+                limit = 0.25;
+                break;
+            case M:
+                limit = 0.15;
+                break;
+            default:
+                limit = 0.07;
+                break;
+        }
+
+
+        double tmp1 = logo.getHeight() * logo.getWidth();
+        double tmp2 = code.getHeight() * code.getWidth();
+        double tmp3 = tmp1/tmp2;
+
+        if( tmp3 < limit) {
+            return true;
+        }
+
+        return false;
     }
 
 }
