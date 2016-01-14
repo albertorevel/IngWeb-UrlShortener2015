@@ -1,28 +1,18 @@
 package urlshortener2015.fuzzywuzzy.repository;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.HSQL;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.badUrl;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.url1;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.url1modified;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.url2;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.url3;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.urlSafe;
-import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.urlSponsor;
-
-import java.util.List;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-
 import urlshortener2015.fuzzywuzzy.domain.ShortURL;
+
+import java.util.List;
+
+import static org.junit.Assert.*;
+import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.HSQL;
+import static urlshortener2015.fuzzywuzzy.repository.fixture.ShortURLFixture.*;
 
 public class ShortURLRepositoryTests {
 
@@ -42,30 +32,32 @@ public class ShortURLRepositoryTests {
 	public void thatSavePersistsTheShortURL() {
 		assertNotNull(repository.save(url1()));
 		assertSame(jdbc.queryForObject("select count(*) from SHORTURL",
-				Integer.class), 1);
+				Integer.class), 4);
 	}
 
 	@Test
 	public void thatSaveSponsor() {
 		assertNotNull(repository.save(urlSponsor()));
-		assertSame(jdbc.queryForObject("select sponsor from SHORTURL",
-				String.class), urlSponsor().getSponsor());
+		assertSame(repository.findByKey("3").getSponsor(), urlSponsor().getSponsor());
 	}
 
 	@Test
 	public void thatSaveSafe() {
+
+		int nSafe = jdbc.queryForObject("select count(*) from SHORTURL where safe = true", Integer.class);
+
 		assertNotNull(repository.save(urlSafe()));
 		assertSame(
-				jdbc.queryForObject("select safe from SHORTURL", Boolean.class),
-				true);
+				jdbc.queryForObject("select count(*) from SHORTURL where safe = true", Integer.class),
+				nSafe + 1);
 		repository.mark(urlSafe(), false);
 		assertSame(
-				jdbc.queryForObject("select safe from SHORTURL", Boolean.class),
-				false);
+				jdbc.queryForObject("select count(*) from SHORTURL where safe = true", Integer.class),
+				nSafe);
 		repository.mark(urlSafe(), true);
 		assertSame(
-				jdbc.queryForObject("select safe from SHORTURL", Boolean.class),
-				true);
+				jdbc.queryForObject("select count(*) from SHORTURL where safe = true", Integer.class),
+				nSafe + 1);
 	}
 
 	@Test
@@ -73,14 +65,14 @@ public class ShortURLRepositoryTests {
 		repository.save(url1());
 		assertNotNull(repository.save(url1()));
 		assertSame(jdbc.queryForObject("select count(*) from SHORTURL",
-				Integer.class), 1);
+				Integer.class), 4);
 	}
 
 	@Test
 	public void thatErrorsInSaveReturnsNull() {
 		assertNull(repository.save(badUrl()));
 		assertSame(jdbc.queryForObject("select count(*) from SHORTURL",
-				Integer.class), 0);
+				Integer.class), 3);
 	}
 
 	@Test
@@ -104,9 +96,9 @@ public class ShortURLRepositoryTests {
 		repository.save(url2());
 		repository.save(url3());
 		List<ShortURL> sul = repository.findByTarget(url1().getTarget());
-		assertEquals(sul.size(), 2);
+		assertEquals(sul.size(), 3);
 		sul = repository.findByTarget(url3().getTarget());
-		assertEquals(sul.size(), 1);
+		assertEquals(sul.size(), 2);
 		sul = repository.findByTarget("dummy");
 		assertEquals(sul.size(), 0);
 	}
@@ -116,9 +108,9 @@ public class ShortURLRepositoryTests {
 		repository.save(url1());
 		repository.save(url2());
 		repository.delete(url1().getHash());
-		assertEquals(repository.count().intValue(), 1);
+		assertEquals(repository.count().intValue(), 4);
 		repository.delete(url2().getHash());
-		assertEquals(repository.count().intValue(), 0);
+		assertEquals(repository.count().intValue(), 3);
 	}
 
 	@Test
