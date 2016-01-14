@@ -36,17 +36,6 @@ public class SystemTests {
 	@Value("${local.server.port}")
 	private int port = 0;
 
-	private static boolean data = true;
-
-//	@Before
-//	public void meterDatos(){
-//		if(data) {
-//			ResponseEntity<String> entity = new TestRestTemplate().postForEntity(
-//					"http://localhost:" + this.port + "/meterDatos", "", String.class);
-//			data = false;
-//		}
-//	}
-
 	@Test
 	public void testHome() throws Exception {
 		ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
@@ -279,10 +268,6 @@ public class SystemTests {
 	}
 	@Test
 	public void testGetInfo() throws Exception {
-		//Metemos los datos a traves de una petición que se ha realizado para los test.
-		//VER DATOS QUE SE METEN EN LA CLASE: ClickRepositoryImpl.java
-		//meterDatos();
-		//Realizamos una peticion "/info" sobre urls con "unizar" y agrupandola por country
 		MultiValueMap<String, Object> parts = new LinkedMultiValueMap<String, Object>();
 		parts.add("patron", "unizar");
 		parts.add("group", "country");
@@ -305,10 +290,6 @@ public class SystemTests {
 
 	@Test
 	public void testGetInfoByDateBounded() throws Exception {
-		//Metemos los datos a traves de una petición que se ha realizado para los test.
-		//VER DATOS QUE SE METEN EN LA CLASE: ClickRepositoryImpl.java
-//		meterDatos();
-		//Realizamos una peticion "/infoDate" sobre urls con "google" y agrupandola por comunity
 		MultiValueMap<String, Object> parts = new LinkedMultiValueMap<String, Object>();
 		parts.add("patron", "google");
 		parts.add("group", "comunity");
@@ -322,10 +303,7 @@ public class SystemTests {
 				"http://localhost:" + this.port+"/info", parts, String.class);
 		ReadContext rc = JsonPath.parse(entity.getBody());
 		JSONArray list = rc.read("$.[0]");
-		//Se comprueba que el tamaño de la primera lista(información agregada) sea 2, aunque hay 5 clicks
-		// a la url "www.unizar.es" que corresponden a esas fechas, 2 son en Aragon.
 		assertEquals(list.size(),4);
-		//Se comprueba que el tamaño de la segunda lista(coordenadas e ip de cada click) sea 5.
 		JSONArray list1 = rc.read("$.[1]");
 		assertEquals(list1.size(),5);
 	}
@@ -356,9 +334,7 @@ public class SystemTests {
 
 	@Test
 	public void testGetInfoByDateUntil() throws Exception {
-		//Metemos los datos a traves de una petición que se ha realizado para los test.
-		//VER DATOS QUE SE METEN EN LA CLASE: ClickRepositoryImpl.java
-//		meterDatos();
+
 		//Realizamos una peticion "/infoDate" sobre urls con "google" y agrupandola por comunity
 		MultiValueMap<String, Object> parts = new LinkedMultiValueMap<String, Object>();
 		parts.add("patron", "google");
@@ -373,19 +349,13 @@ public class SystemTests {
 				"http://localhost:" + this.port+"/info", parts, String.class);
 		ReadContext rc = JsonPath.parse(entity.getBody());
 		JSONArray list = rc.read("$.[0]");
-		//Se comprueba que el tamaño de la primera lista(información agregada) sea 5, en este caso
-		// hay 6 clicks pero 2 son de "Marruecoscity".
 		assertEquals(list.size(),5);
-		//Se comprueba que el tamaño de la segunda lista(coordenadas e ip de cada click) sea 2.
 		JSONArray list1 = rc.read("$.[1]");
 		assertEquals(list1.size(),6);
 	}
 
 	@Test
 	public void testGetInfoByDArea() throws Exception {
-		//Metemos los datos a traves de una petición que se ha realizado para los test.
-		//VER DATOS QUE SE METEN EN LA CLASE: ClickRepositoryImpl.java
-		//meterDatos();
 		//Realizamos una peticion "/infoArea" sobre urls con "oo" y agrupandola por country
 		MultiValueMap<String, Object> parts = new LinkedMultiValueMap<String, Object>();
 		parts.add("patron", "oo");
@@ -398,11 +368,7 @@ public class SystemTests {
 				"http://localhost:" + this.port+"/infoArea", parts, String.class);
 		ReadContext rc = JsonPath.parse(entity.getBody());
 		JSONArray list = rc.read("$.[0]");
-		//Se comprueba que el tamaño de la primera lista(información agregada) sea 4, en este caso
-		// hay 9 clicks y todos son de España o Marruecos, pero esos clicks pertenecen a 2 urls distintas
-		// y en ambas hay clicks de España y de Marruecos.
 		assertEquals(list.size(),4);
-		//Se comprueba que el tamaño de la segunda lista(coordenadas e ip de cada click) sea 2.
 		JSONArray list1 = rc.read("$.[1]");
 		assertEquals(list1.size(),9);
 	}
