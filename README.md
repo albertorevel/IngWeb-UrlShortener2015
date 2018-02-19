@@ -1,6 +1,6 @@
 # Web Engineering 2015-2016 / UrlShortener2015
 
-[![Build Status](https://travis-ci.org/albertorevel/UrlShortener2015.svg?branch=master)](https://travis-ci.org/albertorevel/UrlShortener2015)
+[![Build Status](https://travis-ci.org/albertorevel/UrlShortener2015.svg?branch= alberto)](https://travis-ci.org/albertorevel/UrlShortener2015)
 [![Code Coverage](https://img.shields.io/codecov/c/github/albertorevel/UrlShortener2015/master.svg)](https://codecov.io/github/albertorevel/UrlShortener2015?branch=master)
 
 This is the shared repository for the project developed in this course. Go to the [wiki](https://github.com/UNIZAR-30246-WebEngineering/UrlShortener2015/wiki) to start your project.
